@@ -12,19 +12,13 @@ script:
 
 cache: yarn
 
-before_deploy:
-  - rm -R node_modules
-  - rm -R src
-  - rm yarn.lock
-  - rm package.json
-
 deploy:
   - provider: s3
     access_key_id: $AWS_ACCESS_KEY_ID
     secret_access_key: $AWS_SECRET_ACCESS_KEY
     bucket: $S3_BUCKET
     acl: public_read
-    local_dir: '.'
+    local_dir: build
     skip_cleanup: true
     region: 'eu-west-1'
     on:
