@@ -1,0 +1,105 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "_taskHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "resourceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "Request",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_taskHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "_pathRoot",
+        "type": "bytes32"
+      },
+      {
+        "name": "_resultHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "registerResult",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_taskHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "finalizeTask",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_resourceHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "_taskHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "request",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_taskHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getStatus",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      },
+      {
+        "name": "",
+        "type": "bytes32[]"
+      },
+      {
+        "name": "",
+        "type": "bytes32[]"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

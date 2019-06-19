@@ -7,10 +7,15 @@
     "@types/node": "12.0.8",
     "@types/react": "16.8.20",
     "@types/react-dom": "16.8.4",
+    "@types/rebass": "^3.0.4",
+    "ethers": "^4.0.30",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
-    "typescript": "3.5.2"
+    "rebass": "^3.1.1",
+    "styled-components": "^4.3.1",
+    "typescript": "3.5.2",
+    "web3": "^1.0.0-beta.55"
   },
   "scripts": {
     "start": "react-scripts start",

@@ -1,0 +1,135 @@
+[
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "enforcerAddr",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "minBet",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "name": "_enforcerAddr",
+        "type": "address"
+      },
+      {
+        "name": "_minBet",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "evmParamHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "resourceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "NewPrime",
+    "type": "event"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_resourceHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "_evmParamHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "request",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_evmParamHash",
+        "type": "bytes32"
+      },
+      {
+        "name": "_isPrime",
+        "type": "bool"
+      }
+    ],
+    "name": "bet",
+    "outputs": [],
+    "payable": true,
+    "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_evmParamHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getStatus",
+    "outputs": [
+      {
+        "name": "_challengeEndTime",
+        "type": "uint256"
+      },
+      {
+        "name": "_pathRoots",
+        "type": "bytes32[]"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_evmParamHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "payout",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
