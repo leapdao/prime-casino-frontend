@@ -120,8 +120,16 @@ const App: React.FC = () => {
         <thead>
           <tr>
             <th>Number</th>
-            <th>👍</th>
-            <th>👎</th>
+            <th>
+              <span role="img" aria-label="Yes">
+                👍
+              </span>
+            </th>
+            <th>
+              <span role="img" aria-label="No">
+                👎
+              </span>
+            </th>
             <th>Status</th>
             <th />
           </tr>
@@ -133,8 +141,16 @@ const App: React.FC = () => {
             <td>1 ETH</td>
             <td>Requested</td>
             <td>
-              <StakeButton>👍</StakeButton>
-              <StakeButton>👎</StakeButton>
+              <StakeButton>
+                <span role="img" aria-label="Yes">
+                  👍
+                </span>
+              </StakeButton>
+              <StakeButton>
+                <span role="img" aria-label="No">
+                  👎
+                </span>
+              </StakeButton>
             </td>
           </tr>
           <tr>
@@ -143,8 +159,12 @@ const App: React.FC = () => {
             <td>1 ETH</td>
             <td>Solved</td>
             <td>
-              <StakeButton>👍</StakeButton>
-              <StakeButton>👎</StakeButton>
+              <StakeButton />
+              <StakeButton>
+                <span role="img" aria-label="No">
+                  👎
+                </span>
+              </StakeButton>
             </td>
           </tr>
           <tr>
@@ -153,8 +173,16 @@ const App: React.FC = () => {
             <td>1 ETH</td>
             <td>Challenged</td>
             <td>
-              <StakeButton>👍</StakeButton>
-              <StakeButton>👎</StakeButton>
+              <StakeButton>
+                <span role="img" aria-label="Yes">
+                  👍
+                </span>
+              </StakeButton>
+              <StakeButton>
+                <span role="img" aria-label="No">
+                  👎
+                </span>
+              </StakeButton>
             </td>
           </tr>
           <tr>
@@ -180,15 +208,27 @@ const App: React.FC = () => {
         <tbody>
           <tr>
             <td>1234</td>
-            <td>👍</td>
+            <td>
+              <span role="img" aria-label="Yes">
+                👍
+              </span>
+            </td>
           </tr>
           <tr>
             <td>4567</td>
-            <td>👎</td>
+            <td>
+              <span role="img" aria-label="No">
+                👎
+              </span>
+            </td>
           </tr>
           <tr>
             <td>5647</td>
-            <td>¯\_(ツ)_/¯</td>
+            <td>
+              <span role="img" aria-label="Undecided">
+                ¯\_(ツ)_/¯
+              </span>
+            </td>
           </tr>
         </tbody>
       </Table>
