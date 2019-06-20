@@ -5,6 +5,7 @@ import enforcerMockABI from './enforcerMockABI.json';
 import { Box, Heading, Button, Text } from 'rebass';
 import styled from 'styled-components';
 import Web3 from 'web3';
+import BigNumber from 'bignumber.js';
 
 const injectedProvider = (window as any).ethereum;
 
@@ -89,13 +90,18 @@ const StakeButton = styled(Button)`
 `;
 
 type Prime = {
-  prime: string;
+  prime: BigNumber;
   taskHash: string;
+};
+
+type Status = {
+  _challengeEndTime: BigNumber;
+  _pathRoots: string[];
 };
 
 const App: React.FC = () => {
   const [address, setAddress] = React.useState<string | null>(null);
-  const [minBet, setMinBet] = React.useState<string | null>(null);
+  const [minBet, setMinBet] = React.useState<BigNumber | null>(null);
   const [primes, setPrimes] = React.useState<Prime[] | null>(null);
 
   React.useEffect(() => {
@@ -111,17 +117,19 @@ const App: React.FC = () => {
     primeCasino
       .getPastEvents('NewPrime', { fromBlock: 0 })
       .then(newPrimes =>
-        newPrimes.map(newPrime => ({
-          prime: newPrime.returnValues.prime.toString(),
-          taskHash: newPrime.returnValues.taskHash
-        }))
+        newPrimes.map(newPrime => {
+          return {
+            prime: newPrime.returnValues.prime,
+            taskHash: newPrime.returnValues.taskHash
+          };
+        })
       )
       .then(setPrimes);
     primeCasino.methods
       .minBet()
       .call()
-      .then((minBet: any) => {
-        setMinBet(minBet._hex); // ToDo: do not be sorry, be better
+      .then((minBet: BigNumber) => {
+        setMinBet(minBet); // ToDo: do not be sorry, be better
       });
   }, [setPrimes, setMinBet]);
 
@@ -131,12 +139,11 @@ const App: React.FC = () => {
         primeCasino.methods
           .getStatus(prime.prime)
           .call()
-          .then((status: any) => {
+          .then((status: Status) => {
             const primeStatus = {
               challengeEndTime: status._challengeEndTime.toString(),
               pathRoots: status._pathRoots
             };
-            console.log(prime.prime, primeStatus);
 
             if (primeStatus.pathRoots) {
               primeStatus.pathRoots.forEach((pathRoot: any) => {
@@ -149,7 +156,7 @@ const App: React.FC = () => {
                     }
                   })
                   .then(events => {
-                    console.log(prime.prime, primeStatus, events);
+                    console.log(prime.prime.toString(), primeStatus, events);
                   });
               });
             }
@@ -164,7 +171,7 @@ const App: React.FC = () => {
       primeCasinoABI as any,
       '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da'
     );
-    iPrimeCasino.methods.bet(Number(prime.prime), isPrime).send({
+    iPrimeCasino.methods.bet(prime.prime, isPrime).send({
       value: minBet,
       from: address
     });
@@ -210,8 +217,8 @@ const App: React.FC = () => {
             <tbody>
               {primes &&
                 primes.map(prime => (
-                  <tr>
-                    <td>{prime.prime}</td>
+                  <tr key={prime.prime.toString()}>
+                    <td>{prime.prime.toString()}</td>
                     <td>
                       <StakeButton
                         onClick={() => {
