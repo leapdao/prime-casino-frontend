@@ -1,27 +1,23 @@
 import React from 'react';
 import './App.css';
-// import primeCasinoABI from './primeCasinoABI.json';
-// import enforcerMockABI from './enforcerMockABI.json';
-// import {ethers} from 'ethers';
+import primeCasinoABI from './primeCasinoABI.json';
+import enforcerMockABI from './enforcerMockABI.json';
 import { Box, Heading, Button, Text } from 'rebass';
 import styled from 'styled-components';
-// import Web3 from 'web3';
+import Web3 from 'web3';
 
-// const web3 = new Web3();
-// primeCasino.getPastEvents('allEvents', {}).then(console.log);
-// enforcerMock.getPastEvents('allEvents', {}).then(console.log);
+const injectedProvider = (window as any).ethereum;
 
-// const RPC_URL = 'https://rpc.slock.it/goerli';
-// const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-// const primeCasino = new ethers.Contract('0x1dd86e3a825003c60121671437a43619e00e3c86', primeCasinoABI, provider);
-// const enforcerMock = new ethers.Contract('0xa061bc4fa961f31baa76e7dffa265953615ae788', enforcerMockABI, provider);
-
-// provider.resetEventsBlock(0);
-// primeCasino.once('NewPrime', console.log);
-// provider.getLogs({
-//   address: primeCasino.address,
-//   fromBlock: 0,
-// }).then(console.log);
+const RPC_URL = 'https://rpc.slock.it/goerli';
+const web3 = new Web3(RPC_URL);
+const primeCasino = new web3.eth.Contract(
+  primeCasinoABI as any,
+  '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da'
+);
+const enforcerMock = new web3.eth.Contract(
+  enforcerMockABI as any,
+  '0x49e1c2a52c845c3943182df3ad827a907e3a10b9'
+);
 
 const Container = styled(Box)`
   padding: 20px;
@@ -92,7 +88,88 @@ const StakeButton = styled(Button)`
   }
 `;
 
+type Prime = {
+  prime: string;
+  taskHash: string;
+};
+
 const App: React.FC = () => {
+  const [address, setAddress] = React.useState<string | null>(null);
+  const [minBet, setMinBet] = React.useState<string | null>(null);
+  const [primes, setPrimes] = React.useState<Prime[] | null>(null);
+
+  React.useEffect(() => {
+    if (injectedProvider) {
+      injectedProvider
+        .enable()
+        .then((addrs: string[]) => addrs[0])
+        .then(setAddress);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    primeCasino
+      .getPastEvents('NewPrime', { fromBlock: 0 })
+      .then(newPrimes =>
+        newPrimes.map(newPrime => ({
+          prime: newPrime.returnValues.prime.toString(),
+          taskHash: newPrime.returnValues.taskHash
+        }))
+      )
+      .then(setPrimes);
+    primeCasino.methods
+      .minBet()
+      .call()
+      .then((minBet: any) => {
+        setMinBet(minBet._hex); // ToDo: do not be sorry, be better
+      });
+  }, [setPrimes, setMinBet]);
+
+  React.useEffect(() => {
+    if (primes) {
+      primes.forEach(prime => {
+        primeCasino.methods
+          .getStatus(prime.prime)
+          .call()
+          .then((status: any) => {
+            const primeStatus = {
+              challengeEndTime: status._challengeEndTime.toString(),
+              pathRoots: status._pathRoots
+            };
+            console.log(prime.prime, primeStatus);
+
+            if (primeStatus.pathRoots) {
+              primeStatus.pathRoots.forEach((pathRoot: any) => {
+                enforcerMock
+                  .getPastEvents('Registered', {
+                    fromBlock: 0,
+                    filter: {
+                      _taskHash: prime.taskHash,
+                      _pathRoot: pathRoot
+                    }
+                  })
+                  .then(events => {
+                    console.log(prime.prime, primeStatus, events);
+                  });
+              });
+            }
+          });
+      });
+    }
+  }, [primes]);
+
+  const bet = (prime: Prime, isPrime: boolean) => {
+    const iWeb3 = new Web3(injectedProvider);
+    const iPrimeCasino = new iWeb3.eth.Contract(
+      primeCasinoABI as any,
+      '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da'
+    );
+    iPrimeCasino.methods.bet(Number(prime.prime), isPrime).send({
+      value: minBet,
+      from: address
+    });
+  };
+
   return (
     <Container>
       <Header>
@@ -110,132 +187,179 @@ const App: React.FC = () => {
         <IntroText>Have fun!</IntroText>
       </Header>
       <Divider />
-      <Form>
-        <PrimeInput placeholder="Number" />
-        <Button>New prime</Button>
-      </Form>
-      <Divider />
-      <Heading>Pending bets</Heading>
-      <Table>
-        <thead>
-          <tr>
-            <th>Number</th>
-            <th>
-              <span role="img" aria-label="Yes">
-                👍
-              </span>
-            </th>
-            <th>
-              <span role="img" aria-label="No">
-                👎
-              </span>
-            </th>
-            <th>Status</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1234</td>
-            <td>2 ETH</td>
-            <td>1 ETH</td>
-            <td>Requested</td>
-            <td>
-              <StakeButton>
-                <span role="img" aria-label="Yes">
-                  👍
-                </span>
-              </StakeButton>
-              <StakeButton>
-                <span role="img" aria-label="No">
-                  👎
-                </span>
-              </StakeButton>
-            </td>
-          </tr>
-          <tr>
-            <td>1234</td>
-            <td>2 ETH</td>
-            <td>1 ETH</td>
-            <td>Solved</td>
-            <td>
-              <StakeButton>
-                <span role="img" aria-label="Yes">
-                  👍
-                </span>
-              </StakeButton>
-              <StakeButton>
-                <span role="img" aria-label="No">
-                  👎
-                </span>
-              </StakeButton>
-            </td>
-          </tr>
-          <tr>
-            <td>1234</td>
-            <td>2 ETH</td>
-            <td>1 ETH</td>
-            <td>Challenged</td>
-            <td>
-              <StakeButton>
-                <span role="img" aria-label="Yes">
-                  👍
-                </span>
-              </StakeButton>
-              <StakeButton>
-                <span role="img" aria-label="No">
-                  👎
-                </span>
-              </StakeButton>
-            </td>
-          </tr>
-          <tr>
-            <td>1234</td>
-            <td>2 ETH</td>
-            <td>1 ETH</td>
-            <td>
-              <Button>Payout</Button>
-            </td>
-            <td />
-          </tr>
-        </tbody>
-      </Table>
-      <Divider />
-      <Heading>Completed bets</Heading>
-      <Table>
-        <thead>
-          <tr>
-            <th>Number</th>
-            <th>Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>1234</td>
-            <td>
-              <span role="img" aria-label="Yes">
-                👍
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td>4567</td>
-            <td>
-              <span role="img" aria-label="No">
-                👎
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td>5647</td>
-            <td>
-              <span role="img" aria-label="Undecided">
-                ¯\_(ツ)_/¯
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </Table>
+      {!address && (
+        <>
+          <Text fontSize={20}>Unlock your wallet</Text>
+        </>
+      )}
+      {address && (
+        <>
+          <Form>
+            <PrimeInput placeholder="Number" />
+            <Button>New prime</Button>
+          </Form>
+          <Divider />
+          <Heading>Temp table</Heading>
+          <Table>
+            <thead>
+              <tr>
+                <th>Prime?</th>
+                <th>Bet</th>
+              </tr>
+            </thead>
+            <tbody>
+              {primes &&
+                primes.map(prime => (
+                  <tr>
+                    <td>{prime.prime}</td>
+                    <td>
+                      <StakeButton
+                        onClick={() => {
+                          bet(prime, true);
+                        }}
+                      >
+                        <span role="img" aria-label="Yes">
+                          👍
+                        </span>
+                      </StakeButton>
+                      <StakeButton
+                        onClick={() => {
+                          bet(prime, false);
+                        }}
+                      >
+                        <span role="img" aria-label="No">
+                          👎
+                        </span>
+                      </StakeButton>
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </Table>
+          <Divider />
+          <Heading>Pending bets</Heading>
+          <Table>
+            <thead>
+              <tr>
+                <th>Number</th>
+                <th>
+                  <span role="img" aria-label="Yes">
+                    👍
+                  </span>
+                </th>
+                <th>
+                  <span role="img" aria-label="No">
+                    👎
+                  </span>
+                </th>
+                <th>Status</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1234</td>
+                <td>2 ETH</td>
+                <td>1 ETH</td>
+                <td>Requested</td>
+                <td>
+                  <StakeButton>
+                    <span role="img" aria-label="Yes">
+                      👍
+                    </span>
+                  </StakeButton>
+                  <StakeButton>
+                    <span role="img" aria-label="No">
+                      👎
+                    </span>
+                  </StakeButton>
+                </td>
+              </tr>
+              <tr>
+                <td>1234</td>
+                <td>2 ETH</td>
+                <td>1 ETH</td>
+                <td>Solved</td>
+                <td>
+                  <StakeButton>
+                    <span role="img" aria-label="Yes">
+                      👍
+                    </span>
+                  </StakeButton>
+                  <StakeButton>
+                    <span role="img" aria-label="No">
+                      👎
+                    </span>
+                  </StakeButton>
+                </td>
+              </tr>
+              <tr>
+                <td>1234</td>
+                <td>2 ETH</td>
+                <td>1 ETH</td>
+                <td>Challenged</td>
+                <td>
+                  <StakeButton>
+                    <span role="img" aria-label="Yes">
+                      👍
+                    </span>
+                  </StakeButton>
+                  <StakeButton>
+                    <span role="img" aria-label="No">
+                      👎
+                    </span>
+                  </StakeButton>
+                </td>
+              </tr>
+              <tr>
+                <td>1234</td>
+                <td>2 ETH</td>
+                <td>1 ETH</td>
+                <td>
+                  <Button>Payout</Button>
+                </td>
+                <td />
+              </tr>
+            </tbody>
+          </Table>
+          <Divider />
+          <Heading>Completed bets</Heading>
+          <Table>
+            <thead>
+              <tr>
+                <th>Number</th>
+                <th>Result</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1234</td>
+                <td>
+                  <span role="img" aria-label="Yes">
+                    👍
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>4567</td>
+                <td>
+                  <span role="img" aria-label="No">
+                    👎
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td>5647</td>
+                <td>
+                  <span role="img" aria-label="Undecided">
+                    ¯\_(ツ)_/¯
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </Table>
+        </>
+      )}
     </Container>
   );
 };

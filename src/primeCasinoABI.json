@@ -28,9 +28,27 @@
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "primeTester",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "name": "_enforcerAddr",
+        "type": "address"
+      },
+      {
+        "name": "_primeTester",
         "type": "address"
       },
       {
@@ -47,12 +65,12 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "evmParamHash",
-        "type": "bytes32"
+        "name": "prime",
+        "type": "uint256"
       },
       {
-        "indexed": false,
-        "name": "resourceHash",
+        "indexed": true,
+        "name": "taskHash",
         "type": "bytes32"
       }
     ],
@@ -63,12 +81,8 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_resourceHash",
-        "type": "bytes32"
-      },
-      {
-        "name": "_evmParamHash",
-        "type": "bytes32"
+        "name": "_primeNumber",
+        "type": "uint256"
       }
     ],
     "name": "request",
@@ -81,8 +95,8 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_evmParamHash",
-        "type": "bytes32"
+        "name": "_primeNumber",
+        "type": "uint256"
       },
       {
         "name": "_isPrime",
@@ -99,8 +113,8 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_evmParamHash",
-        "type": "bytes32"
+        "name": "_primeNumber",
+        "type": "uint256"
       }
     ],
     "name": "getStatus",
@@ -122,8 +136,8 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_evmParamHash",
-        "type": "bytes32"
+        "name": "_primeNumber",
+        "type": "uint256"
       }
     ],
     "name": "payout",
