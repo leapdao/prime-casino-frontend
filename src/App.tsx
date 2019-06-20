@@ -159,7 +159,11 @@ const App: React.FC = () => {
             <td>1 ETH</td>
             <td>Solved</td>
             <td>
-              <StakeButton />
+              <StakeButton>
+                <span role="img" aria-label="Yes">
+                  👍
+                </span>
+              </StakeButton>
               <StakeButton>
                 <span role="img" aria-label="No">
                   👎
