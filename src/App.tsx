@@ -92,6 +92,8 @@ const StakeButton = styled(Button)`
 type Prime = {
   prime: BigNumber;
   taskHash: string;
+  challengeEndTime: BigNumber;
+  pathRoots: string[];
 };
 
 type Status = {
@@ -117,13 +119,27 @@ const App: React.FC = () => {
     primeCasino
       .getPastEvents('NewPrime', { fromBlock: 0 })
       .then(newPrimes =>
-        newPrimes.map(newPrime => {
-          return {
-            prime: newPrime.returnValues.prime,
-            taskHash: newPrime.returnValues.taskHash
-          };
-        })
+        newPrimes.map(newPrime => ({
+          prime: newPrime.returnValues.prime,
+          taskHash: newPrime.returnValues.taskHash
+        }))
       )
+      .then(newPrimes => {
+        return Promise.all(
+          newPrimes.map(newPrime => {
+            return primeCasino.methods
+              .getStatus(newPrime.prime)
+              .call()
+              .then((status: Status) => {
+                return {
+                  ...newPrime,
+                  challengeEndTime: status._challengeEndTime,
+                  pathRoots: status._pathRoots
+                };
+              });
+          })
+        );
+      })
       .then(setPrimes);
     primeCasino.methods
       .minBet()
@@ -136,31 +152,21 @@ const App: React.FC = () => {
   React.useEffect(() => {
     if (primes) {
       primes.forEach(prime => {
-        primeCasino.methods
-          .getStatus(prime.prime)
-          .call()
-          .then((status: Status) => {
-            const primeStatus = {
-              challengeEndTime: status._challengeEndTime.toString(),
-              pathRoots: status._pathRoots
-            };
-
-            if (primeStatus.pathRoots) {
-              primeStatus.pathRoots.forEach((pathRoot: any) => {
-                enforcerMock
-                  .getPastEvents('Registered', {
-                    fromBlock: 0,
-                    filter: {
-                      _taskHash: prime.taskHash,
-                      _pathRoot: pathRoot
-                    }
-                  })
-                  .then(events => {
-                    console.log(prime.prime.toString(), primeStatus, events);
-                  });
+        if (prime.pathRoots) {
+          prime.pathRoots.forEach((pathRoot: any) => {
+            enforcerMock
+              .getPastEvents('Registered', {
+                fromBlock: 0,
+                filter: {
+                  _taskHash: prime.taskHash,
+                  _pathRoot: pathRoot
+                }
+              })
+              .then(events => {
+                console.log(prime.prime.toString(), prime, events);
               });
-            }
           });
+        }
       });
     }
   }, [primes]);
