@@ -65,23 +65,60 @@
     "inputs": [
       {
         "indexed": true,
-        "name": "prime",
+        "name": "number",
         "type": "uint256"
       },
       {
         "indexed": true,
         "name": "taskHash",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "sumYes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "sumNo",
+        "type": "uint256"
       }
     ],
-    "name": "NewPrime",
+    "name": "NewCandidatePrime",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "number",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "taskHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "sumYes",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "sumNo",
+        "type": "uint256"
+      }
+    ],
+    "name": "NewBet",
     "type": "event"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "name": "_primeNumber",
+        "name": "_candidateNumber",
         "type": "uint256"
       }
     ],
@@ -95,7 +132,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_primeNumber",
+        "name": "_candidateNumber",
         "type": "uint256"
       },
       {
@@ -113,7 +150,7 @@
     "constant": true,
     "inputs": [
       {
-        "name": "_primeNumber",
+        "name": "_candidateNumber",
         "type": "uint256"
       }
     ],
@@ -136,7 +173,7 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_primeNumber",
+        "name": "_candidateNumber",
         "type": "uint256"
       }
     ],

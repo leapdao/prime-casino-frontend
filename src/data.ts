@@ -22,11 +22,11 @@ export const usePrimes = (primeCasino: Contract) => {
   const getStatus = useCallback(
     (eventData: EventData): Promise<Prime> => {
       return primeCasino.methods
-        .getStatus(eventData.returnValues.prime)
+        .getStatus(eventData.returnValues.number)
         .call()
         .then((status: Status) => {
           return {
-            prime: eventData.returnValues.prime,
+            prime: eventData.returnValues.number,
             taskHash: eventData.returnValues.taskHash,
             challengeEndTime: status._challengeEndTime,
             pathRoots: status._pathRoots
@@ -37,15 +37,17 @@ export const usePrimes = (primeCasino: Contract) => {
   );
 
   useEffect(() => {
-    primeCasino.getPastEvents('NewPrime', { fromBlock: 0 }).then(events => {
-      Promise.all(events.map(getStatus)).then(newPrimes => {
-        setPrimes(newPrimes);
+    primeCasino
+      .getPastEvents('NewCandidatePrime', { fromBlock: 0 })
+      .then(events => {
+        Promise.all(events.map(getStatus)).then(newPrimes => {
+          setPrimes(newPrimes);
+        });
       });
-    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const r = primeCasino.events.NewPrime(
+    const r = primeCasino.events.NewCandidatePrime(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
         getStatus(event).then(prime => {

@@ -15,8 +15,8 @@ import { useMinBet, usePrimes } from './data';
 import { Prime } from './types';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const PRIME_CASINO_ADDR = '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da';
-const ENFORCER_MOCK_ADDR = '0x49e1c2a52c845c3943182df3ad827a907e3a10b9';
+const PRIME_CASINO_ADDR = '0xc5c6340e8d809f54460580bbfae760757e2224df';
+const ENFORCER_MOCK_ADDR = '0x779e3ad8665545ba52b454b1f7e8fbd2512e1fd2';
 
 const Container = styled(Box)`
   padding: 20px;
