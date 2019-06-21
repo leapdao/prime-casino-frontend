@@ -136,7 +136,7 @@ const App: React.FC = () => {
         }
       });
     }
-  }, [primes]);
+  }, [primes, enforcerMock]);
 
   const bet = (prime: Prime, isPrime: boolean) => {
     if (iPrimeCasino && minBet) {
@@ -147,14 +147,17 @@ const App: React.FC = () => {
     }
   };
 
-  const newPrime = (prime: string) => {
-    if (iPrimeCasino && minBet) {
-      iPrimeCasino.methods.request(prime).send({
-        value: minBet,
-        from: address
-      });
-    }
-  };
+  const newPrime = React.useCallback(
+    (prime: string) => {
+      if (iPrimeCasino && minBet) {
+        iPrimeCasino.methods.request(prime).send({
+          value: minBet,
+          from: address
+        });
+      }
+    },
+    [address, iPrimeCasino, minBet]
+  );
 
   const handleNewPrimeSubmit = React.useCallback(
     e => {
@@ -163,7 +166,7 @@ const App: React.FC = () => {
         newPrime(inputRef.current.value);
       }
     },
-    [minBet, inputRef.current]
+    [minBet, newPrime]
   );
 
   const registerResults = (prime: Prime) => {
