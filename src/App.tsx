@@ -5,19 +5,20 @@ import enforcerMockABI from './enforcerMockABI.json';
 import { Box, Heading, Button, Text } from 'rebass';
 import styled from 'styled-components';
 import Web3 from 'web3';
+import { Contract } from 'web3-eth-contract/types';
 import BigNumber from 'bignumber.js';
 
-const injectedProvider = (window as any).ethereum;
-
 const RPC_URL = 'https://rpc.slock.it/goerli';
+const PRIME_CASINO_ADDR = '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da';
+const ENFORCER_MOCK_ADDR = '0x49e1c2a52c845c3943182df3ad827a907e3a10b9';
 const web3 = new Web3(RPC_URL);
 const primeCasino = new web3.eth.Contract(
   primeCasinoABI as any,
-  '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da'
+  PRIME_CASINO_ADDR
 );
 const enforcerMock = new web3.eth.Contract(
   enforcerMockABI as any,
-  '0x49e1c2a52c845c3943182df3ad827a907e3a10b9'
+  ENFORCER_MOCK_ADDR
 );
 
 const Container = styled(Box)`
@@ -101,19 +102,48 @@ type Status = {
   _pathRoots: string[];
 };
 
-const App: React.FC = () => {
+const useInjectedWeb3 = (): [Web3 | null, string | null] => {
+  const [iWeb3, setiWeb3] = React.useState<Web3 | null>(null);
   const [address, setAddress] = React.useState<string | null>(null);
-  const [minBet, setMinBet] = React.useState<BigNumber | null>(null);
-  const [primes, setPrimes] = React.useState<Prime[] | null>(null);
-
   React.useEffect(() => {
+    const injectedProvider = (window as any).ethereum;
     if (injectedProvider) {
-      injectedProvider
-        .enable()
-        .then((addrs: string[]) => addrs[0])
-        .then(setAddress);
+      injectedProvider.enable().then((addrs: string[]) => {
+        setiWeb3(new Web3(injectedProvider));
+        setAddress(addrs[0]);
+      });
     }
   }, []);
+
+  return [iWeb3, address];
+};
+
+const useInjectedContract = (iWeb3: Web3 | null, abi: any, address: string) => {
+  const [contract, setContract] = React.useState<Contract | null>(null);
+  React.useEffect(() => {
+    if (iWeb3) {
+      setContract(new iWeb3.eth.Contract(abi, address));
+    }
+  }, [iWeb3, abi, address]);
+
+  return contract;
+};
+
+const App: React.FC = () => {
+  const [iWeb3, address] = useInjectedWeb3();
+  const iPrimeCasino = useInjectedContract(
+    iWeb3,
+    primeCasinoABI,
+    PRIME_CASINO_ADDR
+  );
+  const iEnforcerMock = useInjectedContract(
+    iWeb3,
+    enforcerMockABI,
+    ENFORCER_MOCK_ADDR
+  );
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const [minBet, setMinBet] = React.useState<BigNumber | null>(null);
+  const [primes, setPrimes] = React.useState<Prime[] | null>(null);
 
   React.useEffect(() => {
     primeCasino
@@ -151,6 +181,7 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     if (primes) {
+      console.log(primes);
       primes.forEach(prime => {
         if (prime.pathRoots) {
           prime.pathRoots.forEach((pathRoot: any) => {
@@ -172,15 +203,44 @@ const App: React.FC = () => {
   }, [primes]);
 
   const bet = (prime: Prime, isPrime: boolean) => {
-    const iWeb3 = new Web3(injectedProvider);
-    const iPrimeCasino = new iWeb3.eth.Contract(
-      primeCasinoABI as any,
-      '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da'
-    );
-    iPrimeCasino.methods.bet(prime.prime, isPrime).send({
-      value: minBet,
-      from: address
-    });
+    if (iPrimeCasino && minBet) {
+      iPrimeCasino.methods.bet(prime.prime, isPrime).send({
+        value: minBet,
+        from: address
+      });
+    }
+  };
+
+  const newPrime = (prime: string) => {
+    if (iPrimeCasino && minBet) {
+      iPrimeCasino.methods.request(prime).send({
+        value: minBet,
+        from: address
+      });
+    }
+  };
+
+  const handleNewPrimeSubmit = React.useCallback(
+    e => {
+      e.preventDefault();
+      if (minBet && inputRef.current) {
+        newPrime(inputRef.current.value);
+      }
+    },
+    [minBet, inputRef.current]
+  );
+
+  const registerResults = (prime: Prime) => {
+    if (iEnforcerMock) {
+      const path =
+        '0x1100000000000000000000000000000000000000000000000000000000000011';
+      iEnforcerMock.methods
+        .registerResult(prime.taskHash, path, '0x00')
+        .send({ from: address });
+      iEnforcerMock.methods
+        .registerResult(prime.taskHash, path, '0x01')
+        .send({ from: address });
+    }
   };
 
   return (
@@ -207,9 +267,9 @@ const App: React.FC = () => {
       )}
       {address && (
         <>
-          <Form>
-            <PrimeInput placeholder="Number" />
-            <Button>New prime</Button>
+          <Form onSubmit={handleNewPrimeSubmit}>
+            <PrimeInput ref={inputRef} placeholder="Number" />
+            <Button type="submit">New prime</Button>
           </Form>
           <Divider />
           <Heading>Temp table</Heading>
@@ -243,6 +303,14 @@ const App: React.FC = () => {
                         <span role="img" aria-label="No">
                           👎
                         </span>
+                      </StakeButton>
+                      <StakeButton
+                        borderColor="red"
+                        onClick={() => {
+                          registerResults(prime);
+                        }}
+                      >
+                        register results
                       </StakeButton>
                     </td>
                   </tr>
