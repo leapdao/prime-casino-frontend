@@ -4,22 +4,19 @@ import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
 import { Box, Heading, Button, Text } from 'rebass';
 import styled from 'styled-components';
-import Web3 from 'web3';
-import { Contract } from 'web3-eth-contract/types';
-import BigNumber from 'bignumber.js';
 
-const RPC_URL = 'https://rpc.slock.it/goerli';
+import {
+  useInjectedWeb3,
+  useInjectedContract,
+  useWeb3,
+  useContract
+} from './useWeb3';
+import { useMinBet, usePrimes } from './data';
+import { Prime } from './types';
+
+const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
 const PRIME_CASINO_ADDR = '0xbeb4839e0c53e24b6ae1e00a2f83a0bfa921b0da';
 const ENFORCER_MOCK_ADDR = '0x49e1c2a52c845c3943182df3ad827a907e3a10b9';
-const web3 = new Web3(RPC_URL);
-const primeCasino = new web3.eth.Contract(
-  primeCasinoABI as any,
-  PRIME_CASINO_ADDR
-);
-const enforcerMock = new web3.eth.Contract(
-  enforcerMockABI as any,
-  ENFORCER_MOCK_ADDR
-);
 
 const Container = styled(Box)`
   padding: 20px;
@@ -90,46 +87,19 @@ const StakeButton = styled(Button)`
   }
 `;
 
-type Prime = {
-  prime: BigNumber;
-  taskHash: string;
-  challengeEndTime: BigNumber;
-  pathRoots: string[];
-};
-
-type Status = {
-  _challengeEndTime: BigNumber;
-  _pathRoots: string[];
-};
-
-const useInjectedWeb3 = (): [Web3 | null, string | null] => {
-  const [iWeb3, setiWeb3] = React.useState<Web3 | null>(null);
-  const [address, setAddress] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    const injectedProvider = (window as any).ethereum;
-    if (injectedProvider) {
-      injectedProvider.enable().then((addrs: string[]) => {
-        setiWeb3(new Web3(injectedProvider));
-        setAddress(addrs[0]);
-      });
-    }
-  }, []);
-
-  return [iWeb3, address];
-};
-
-const useInjectedContract = (iWeb3: Web3 | null, abi: any, address: string) => {
-  const [contract, setContract] = React.useState<Contract | null>(null);
-  React.useEffect(() => {
-    if (iWeb3) {
-      setContract(new iWeb3.eth.Contract(abi, address));
-    }
-  }, [iWeb3, abi, address]);
-
-  return contract;
-};
-
 const App: React.FC = () => {
+  const web3 = useWeb3(RPC_URL);
+  const primeCasino = useContract(
+    web3,
+    primeCasinoABI as any,
+    PRIME_CASINO_ADDR
+  );
+  const enforcerMock = useContract(
+    web3,
+    enforcerMockABI as any,
+    ENFORCER_MOCK_ADDR
+  );
+
   const [iWeb3, address] = useInjectedWeb3();
   const iPrimeCasino = useInjectedContract(
     iWeb3,
@@ -141,43 +111,9 @@ const App: React.FC = () => {
     enforcerMockABI,
     ENFORCER_MOCK_ADDR
   );
+  const minBet = useMinBet(primeCasino);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const [minBet, setMinBet] = React.useState<BigNumber | null>(null);
-  const [primes, setPrimes] = React.useState<Prime[] | null>(null);
-
-  React.useEffect(() => {
-    primeCasino
-      .getPastEvents('NewPrime', { fromBlock: 0 })
-      .then(newPrimes =>
-        newPrimes.map(newPrime => ({
-          prime: newPrime.returnValues.prime,
-          taskHash: newPrime.returnValues.taskHash
-        }))
-      )
-      .then(newPrimes => {
-        return Promise.all(
-          newPrimes.map(newPrime => {
-            return primeCasino.methods
-              .getStatus(newPrime.prime)
-              .call()
-              .then((status: Status) => {
-                return {
-                  ...newPrime,
-                  challengeEndTime: status._challengeEndTime,
-                  pathRoots: status._pathRoots
-                };
-              });
-          })
-        );
-      })
-      .then(setPrimes);
-    primeCasino.methods
-      .minBet()
-      .call()
-      .then((minBet: BigNumber) => {
-        setMinBet(minBet); // ToDo: do not be sorry, be better
-      });
-  }, [setPrimes, setMinBet]);
+  const primes = usePrimes(primeCasino);
 
   React.useEffect(() => {
     if (primes) {
