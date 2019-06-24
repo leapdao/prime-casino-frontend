@@ -113,30 +113,7 @@ const App: React.FC = () => {
   );
   const minBet = useMinBet(primeCasino);
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const primes = usePrimes(primeCasino);
-
-  React.useEffect(() => {
-    if (primes) {
-      console.log(primes);
-      primes.forEach(prime => {
-        if (prime.pathRoots) {
-          prime.pathRoots.forEach((pathRoot: any) => {
-            enforcerMock
-              .getPastEvents('Registered', {
-                fromBlock: 0,
-                filter: {
-                  _taskHash: prime.taskHash,
-                  _pathRoot: pathRoot
-                }
-              })
-              .then(events => {
-                console.log(prime.prime.toString(), prime, events);
-              });
-          });
-        }
-      });
-    }
-  }, [primes, enforcerMock]);
+  const primes = usePrimes(primeCasino, enforcerMock);
 
   const bet = (prime: Prime, isPrime: boolean) => {
     if (iPrimeCasino && minBet) {
@@ -164,20 +141,18 @@ const App: React.FC = () => {
       e.preventDefault();
       if (minBet && inputRef.current) {
         newPrime(inputRef.current.value);
+        inputRef.current.value = '';
       }
     },
     [minBet, newPrime]
   );
 
-  const registerResults = (prime: Prime) => {
+  const registerResult = (prime: Prime) => {
     if (iEnforcerMock) {
       const path =
         '0x1100000000000000000000000000000000000000000000000000000000000011';
       iEnforcerMock.methods
         .registerResult(prime.taskHash, path, '0x00')
-        .send({ from: address });
-      iEnforcerMock.methods
-        .registerResult(prime.taskHash, path, '0x01')
         .send({ from: address });
     }
   };
@@ -216,44 +191,55 @@ const App: React.FC = () => {
             <thead>
               <tr>
                 <th>Prime?</th>
+                <th>
+                  <span role="img" aria-label="Yes">
+                    👍
+                  </span>
+                </th>
+                <th>
+                  <span role="img" aria-label="No">
+                    👎
+                  </span>
+                </th>
                 <th>Bet</th>
               </tr>
             </thead>
             <tbody>
-              {primes &&
-                primes.map(prime => (
-                  <tr key={prime.prime.toString()}>
-                    <td>{prime.prime.toString()}</td>
-                    <td>
-                      <StakeButton
-                        onClick={() => {
-                          bet(prime, true);
-                        }}
-                      >
-                        <span role="img" aria-label="Yes">
-                          👍
-                        </span>
-                      </StakeButton>
-                      <StakeButton
-                        onClick={() => {
-                          bet(prime, false);
-                        }}
-                      >
-                        <span role="img" aria-label="No">
-                          👎
-                        </span>
-                      </StakeButton>
-                      <StakeButton
-                        borderColor="red"
-                        onClick={() => {
-                          registerResults(prime);
-                        }}
-                      >
-                        register results
-                      </StakeButton>
-                    </td>
-                  </tr>
-                ))}
+              {primes.map(prime => (
+                <tr key={prime.prime.toString()}>
+                  <td>{prime.prime.toString()}</td>
+                  <td>{web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
+                  <td>{web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
+                  <td>
+                    <StakeButton
+                      onClick={() => {
+                        bet(prime, true);
+                      }}
+                    >
+                      <span role="img" aria-label="Yes">
+                        👍
+                      </span>
+                    </StakeButton>
+                    <StakeButton
+                      onClick={() => {
+                        bet(prime, false);
+                      }}
+                    >
+                      <span role="img" aria-label="No">
+                        👎
+                      </span>
+                    </StakeButton>
+                    <StakeButton
+                      borderColor="red"
+                      onClick={() => {
+                        registerResult(prime);
+                      }}
+                    >
+                      registerResult
+                    </StakeButton>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
           <Divider />
