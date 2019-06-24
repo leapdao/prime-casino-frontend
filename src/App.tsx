@@ -1,9 +1,10 @@
 import React from 'react';
+import styled from 'styled-components';
+import { Box, Heading, Button, Text } from 'rebass';
+import partition from 'lodash/partition';
 import './App.css';
 import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
-import { Box, Heading, Button, Text } from 'rebass';
-import styled from 'styled-components';
 
 import {
   useInjectedWeb3,
@@ -157,6 +158,15 @@ const App: React.FC = () => {
     }
   };
 
+  const now = Math.round(Date.now() / 1000);
+  const [completed, pending] = partition(
+    primes,
+    prime =>
+      prime.results.length === 1 &&
+      prime.status.challengeEndTime.lte(now) &&
+      prime.status.challengeEndTime.gt(0)
+  );
+
   return (
     <Container>
       <Header>
@@ -168,8 +178,9 @@ const App: React.FC = () => {
           is&nbsp;probably prime or not under the Miller-Rabin test.
         </IntroText>
         <IntroText>
-          A bet takes 0.1 ETH. You can either propose a new probably prime
-          or&nbsp;stake yes/no on an existing one.
+          A bet takes {minBet && web3.utils.fromWei(minBet.toString())} ETH. You
+          can either propose a new probably prime or&nbsp;stake yes/no on an
+          existing one.
         </IntroText>
         <IntroText>Have fun!</IntroText>
       </Header>
@@ -185,63 +196,6 @@ const App: React.FC = () => {
             <PrimeInput ref={inputRef} placeholder="Number" />
             <Button type="submit">New prime</Button>
           </Form>
-          <Divider />
-          <Heading>Temp table</Heading>
-          <Table>
-            <thead>
-              <tr>
-                <th>Prime?</th>
-                <th>
-                  <span role="img" aria-label="Yes">
-                    👍
-                  </span>
-                </th>
-                <th>
-                  <span role="img" aria-label="No">
-                    👎
-                  </span>
-                </th>
-                <th>Bet</th>
-              </tr>
-            </thead>
-            <tbody>
-              {primes.map(prime => (
-                <tr key={prime.prime.toString()}>
-                  <td>{prime.prime.toString()}</td>
-                  <td>{web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
-                  <td>{web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
-                  <td>
-                    <StakeButton
-                      onClick={() => {
-                        bet(prime, true);
-                      }}
-                    >
-                      <span role="img" aria-label="Yes">
-                        👍
-                      </span>
-                    </StakeButton>
-                    <StakeButton
-                      onClick={() => {
-                        bet(prime, false);
-                      }}
-                    >
-                      <span role="img" aria-label="No">
-                        👎
-                      </span>
-                    </StakeButton>
-                    <StakeButton
-                      borderColor="red"
-                      onClick={() => {
-                        registerResult(prime);
-                      }}
-                    >
-                      registerResult
-                    </StakeButton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
           <Divider />
           <Heading>Pending bets</Heading>
           <Table>
@@ -263,69 +217,70 @@ const App: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1234</td>
-                <td>2 ETH</td>
-                <td>1 ETH</td>
-                <td>Requested</td>
-                <td>
-                  <StakeButton>
-                    <span role="img" aria-label="Yes">
-                      👍
-                    </span>
-                  </StakeButton>
-                  <StakeButton>
-                    <span role="img" aria-label="No">
-                      👎
-                    </span>
-                  </StakeButton>
-                </td>
-              </tr>
-              <tr>
-                <td>1234</td>
-                <td>2 ETH</td>
-                <td>1 ETH</td>
-                <td>Solved</td>
-                <td>
-                  <StakeButton>
-                    <span role="img" aria-label="Yes">
-                      👍
-                    </span>
-                  </StakeButton>
-                  <StakeButton>
-                    <span role="img" aria-label="No">
-                      👎
-                    </span>
-                  </StakeButton>
-                </td>
-              </tr>
-              <tr>
-                <td>1234</td>
-                <td>2 ETH</td>
-                <td>1 ETH</td>
-                <td>Challenged</td>
-                <td>
-                  <StakeButton>
-                    <span role="img" aria-label="Yes">
-                      👍
-                    </span>
-                  </StakeButton>
-                  <StakeButton>
-                    <span role="img" aria-label="No">
-                      👎
-                    </span>
-                  </StakeButton>
-                </td>
-              </tr>
-              <tr>
-                <td>1234</td>
-                <td>2 ETH</td>
-                <td>1 ETH</td>
-                <td>
-                  <Button>Payout</Button>
-                </td>
-                <td />
-              </tr>
+              {pending.map(prime => (
+                <tr key={prime.prime.toString()}>
+                  <td>{prime.prime.toString()}</td>
+                  <td>{web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
+                  <td>{web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
+                  <td>
+                    {prime.results.length === 0 && (
+                      <>
+                        {prime.status.challengeEndTime.gte(now) && 'Requested'}
+                        {prime.status.challengeEndTime.lte(now) &&
+                          prime.status.challengeEndTime.gt(0) &&
+                          'Not solved (what to do?)'}
+                      </>
+                    )}
+                    {prime.results.length === 1 && (
+                      <>{prime.status.challengeEndTime.gte(now) && 'Solved'}</>
+                    )}
+                    {prime.results.length > 1 && (
+                      <>
+                        {prime.status.challengeEndTime.gte(now) && 'Challenged'}
+                        {prime.status.challengeEndTime.lte(now) &&
+                          prime.status.challengeEndTime.gt(0) &&
+                          'Failed (what to do?)'}
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    {prime.status.challengeEndTime.gte(now) &&
+                      prime.results.length > 0 && (
+                        <>
+                          <StakeButton
+                            onClick={() => {
+                              bet(prime, true);
+                            }}
+                          >
+                            <span role="img" aria-label="Yes">
+                              👍
+                            </span>
+                          </StakeButton>
+                          <StakeButton
+                            onClick={() => {
+                              bet(prime, false);
+                            }}
+                          >
+                            <span role="img" aria-label="No">
+                              👎
+                            </span>
+                          </StakeButton>
+                        </>
+                      )}
+
+                    {prime.results.length === 0 && (
+                      <StakeButton
+                        borderColor="red"
+                        onClick={() => {
+                          registerResult(prime);
+                        }}
+                      >
+                        registerResult
+                      </StakeButton>
+                    )}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
           <Divider />
@@ -338,30 +293,18 @@ const App: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>1234</td>
-                <td>
-                  <span role="img" aria-label="Yes">
-                    👍
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>4567</td>
-                <td>
-                  <span role="img" aria-label="No">
-                    👎
-                  </span>
-                </td>
-              </tr>
-              <tr>
-                <td>5647</td>
-                <td>
-                  <span role="img" aria-label="Undecided">
-                    ¯\_(ツ)_/¯
-                  </span>
-                </td>
-              </tr>
+              {completed.map(prime => (
+                <tr key={prime.prime.toString()}>
+                  <td>{prime.prime.toString()}</td>
+                  <td>
+                    <span role="img" aria-label="Yes">
+                      {prime.results[0].result === '0x00' && '👎'}
+                      {prime.results[0].result === '0x01' && '👍'}
+                      {prime.results[0].result === '0x02' && '¯_(ツ)_/¯'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
         </>

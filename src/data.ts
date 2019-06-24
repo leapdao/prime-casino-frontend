@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useReducer } from 'react';
+import { useState, useEffect, useReducer } from 'react';
 import { Contract, EventData } from 'web3-eth-contract';
 import BigNumber from 'bignumber.js';
 import produce from 'immer';
@@ -52,8 +52,16 @@ const reducer = (state: State, action: any): State => {
           prime => prime.taskHash === action.event.returnValues._taskHash
         );
         if (index !== -1) {
-          draft[index].results = action.results;
-          draft[index].status = action.status;
+          if (
+            draft[index].status.pathRoots.indexOf(
+              action.event.returnValues._pathRoot
+            ) === -1
+          ) {
+            draft[index].results.push(action.event.returnValues.result);
+            draft[index].status.pathRoots.push(
+              action.event.returnValues._pathRoot
+            );
+          }
         } else {
           console.log('notFoundNumber', state, draft, action);
         }
@@ -66,8 +74,8 @@ const reducer = (state: State, action: any): State => {
 export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const getResults = useCallback(
-    (taskHash: string, pathRoots: string[]) => {
+  useEffect(() => {
+    const getResults = (taskHash: string, pathRoots: string[]) => {
       return Promise.all(
         pathRoots.map(pathRoot => {
           return enforcerMock
@@ -86,12 +94,9 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
             });
         })
       );
-    },
-    [enforcerMock]
-  );
+    };
 
-  const getStatus = useCallback(
-    (number: BigNumber): Promise<Status> => {
+    const getStatus = (number: BigNumber): Promise<Status> => {
       return primeCasino.methods
         .getStatus(number)
         .call()
@@ -107,12 +112,9 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
             pathRoots: _pathRoots
           })
         );
-    },
-    [primeCasino]
-  );
+    };
 
-  const getEventAction = useCallback(
-    (event: EventData) => {
+    const getEventAction = (event: EventData) => {
       if (event.event === 'NewCandidatePrime') {
         return getStatus(event.returnValues.number).then(status => {
           return getResults(event.returnValues.taskHash, status.pathRoots).then(
@@ -130,74 +132,50 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
           event
         });
       } else if (event.event === 'Registered') {
-        const prime = state.find(
-          prime => prime.taskHash === event.returnValues._taskHash
-        );
-        if (prime) {
-          return getStatus(prime.prime).then(status => {
-            return getResults(
-              event.returnValues._taskHash,
-              status.pathRoots
-            ).then(results => ({
-              type: event.event,
-              event,
-              status,
-              results
-            }));
-          });
-        }
+        return {
+          type: event.event,
+          event
+        };
       }
 
       return Promise.resolve(null);
-    },
-    [getStatus, getResults, state]
-  );
+    };
 
-  useEffect(() => {
-    primeCasino.getPastEvents('allEvents', { fromBlock: 0 }).then(events => {
-      Promise.all(events.map(getEventAction).filter(a => a) as any).then(
+    const handleEvents = (events: EventData[]) => {
+      return Promise.all(events.map(getEventAction).filter(a => a) as any).then(
         actions => {
           actions.forEach(action => dispatch(action));
         }
       );
-    });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    };
 
-  useEffect(() => {
+    primeCasino.getPastEvents('allEvents', { fromBlock: 0 }).then(events => {
+      handleEvents(events);
+    });
+
     const r = primeCasino.events.allEvents(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
-        (getEventAction(event) as any).then((action: any) => {
-          if (action) {
-            dispatch(action);
-          }
-        });
+        handleEvents([event]);
       }
     );
-    return () => {
-      if (r.id) {
-        r.unsubscribe();
-      }
-    };
-  }, [primeCasino, getEventAction]);
 
-  useEffect(() => {
-    const r = enforcerMock.events.Registered(
+    const r2 = enforcerMock.events.Registered(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
-        (getEventAction(event) as any).then((action: any) => {
-          if (action) {
-            dispatch(action);
-          }
-        });
+        handleEvents([event]);
       }
     );
+
     return () => {
       if (r.id) {
         r.unsubscribe();
       }
+      if (r2.id) {
+        r2.unsubscribe();
+      }
     };
-  }, [enforcerMock, getEventAction]);
+  }, []); // eslint-disable-line
 
   return state;
 };
