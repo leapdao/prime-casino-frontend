@@ -43,7 +43,19 @@ const reducer = (state: State, action: any): State => {
           draft[index].sumYes = action.event.returnValues.sumYes;
           draft[index].sumNo = action.event.returnValues.sumNo;
         } else {
-          console.log('notFoundNumber', state, draft, action.event);
+          console.log('notFoundNumber', state, draft, action);
+        }
+      });
+    case 'Registered':
+      return produce(state, draft => {
+        const index = draft.findIndex(
+          prime => prime.taskHash === action.event.returnValues._taskHash
+        );
+        if (index !== -1) {
+          draft[index].results = action.results;
+          draft[index].status = action.status;
+        } else {
+          console.log('notFoundNumber', state, draft, action);
         }
       });
   }
@@ -79,9 +91,9 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
   );
 
   const getStatus = useCallback(
-    (eventData: EventData): Promise<Status> => {
+    (number: BigNumber): Promise<Status> => {
       return primeCasino.methods
-        .getStatus(eventData.returnValues.number)
+        .getStatus(number)
         .call()
         .then(
           ({
@@ -102,7 +114,7 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
   const getEventAction = useCallback(
     (event: EventData) => {
       if (event.event === 'NewCandidatePrime') {
-        return getStatus(event).then(status => {
+        return getStatus(event.returnValues.number).then(status => {
           return getResults(event.returnValues.taskHash, status.pathRoots).then(
             results => ({
               type: event.event,
@@ -117,11 +129,28 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
           type: event.event,
           event
         });
+      } else if (event.event === 'Registered') {
+        const prime = state.find(
+          prime => prime.taskHash === event.returnValues._taskHash
+        );
+        if (prime) {
+          return getStatus(prime.prime).then(status => {
+            return getResults(
+              event.returnValues._taskHash,
+              status.pathRoots
+            ).then(results => ({
+              type: event.event,
+              event,
+              status,
+              results
+            }));
+          });
+        }
       }
 
       return Promise.resolve(null);
     },
-    [getStatus, getResults]
+    [getStatus, getResults, state]
   );
 
   useEffect(() => {
@@ -151,6 +180,24 @@ export const usePrimes = (primeCasino: Contract, enforcerMock: Contract) => {
       }
     };
   }, [primeCasino, getEventAction]);
+
+  useEffect(() => {
+    const r = enforcerMock.events.Registered(
+      { fromBlock: 'latest' },
+      (err: any, event: EventData) => {
+        (getEventAction(event) as any).then((action: any) => {
+          if (action) {
+            dispatch(action);
+          }
+        });
+      }
+    );
+    return () => {
+      if (r.id) {
+        r.unsubscribe();
+      }
+    };
+  }, [enforcerMock, getEventAction]);
 
   return state;
 };
