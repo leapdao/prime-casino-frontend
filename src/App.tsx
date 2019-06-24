@@ -1,23 +1,10 @@
 import React from 'react';
 import styled from 'styled-components';
+import { observer } from 'mobx-react-lite';
 import { Box, Heading, Button, Text } from 'rebass';
 import partition from 'lodash/partition';
 import './App.css';
-import primeCasinoABI from './primeCasinoABI.json';
-import enforcerMockABI from './enforcerMockABI.json';
-
-import {
-  useInjectedWeb3,
-  useInjectedContract,
-  useWeb3,
-  useContract
-} from './useWeb3';
-import { useMinBet, usePrimes } from './data';
-import { Prime } from './types';
-
-const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const PRIME_CASINO_ADDR = '0xc5c6340e8d809f54460580bbfae760757e2224df';
-const ENFORCER_MOCK_ADDR = '0x779e3ad8665545ba52b454b1f7e8fbd2512e1fd2';
+import { store } from './store';
 
 const Container = styled(Box)`
   padding: 20px;
@@ -88,79 +75,20 @@ const StakeButton = styled(Button)`
   }
 `;
 
-const App: React.FC = () => {
-  const web3 = useWeb3(RPC_URL);
-  const primeCasino = useContract(
-    web3,
-    primeCasinoABI as any,
-    PRIME_CASINO_ADDR
-  );
-  const enforcerMock = useContract(
-    web3,
-    enforcerMockABI as any,
-    ENFORCER_MOCK_ADDR
-  );
-
-  const [iWeb3, address] = useInjectedWeb3();
-  const iPrimeCasino = useInjectedContract(
-    iWeb3,
-    primeCasinoABI,
-    PRIME_CASINO_ADDR
-  );
-  const iEnforcerMock = useInjectedContract(
-    iWeb3,
-    enforcerMockABI,
-    ENFORCER_MOCK_ADDR
-  );
-  const minBet = useMinBet(primeCasino);
+const App: React.FC = observer(() => {
   const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const primes = usePrimes(primeCasino, enforcerMock);
 
-  const bet = (prime: Prime, isPrime: boolean) => {
-    if (iPrimeCasino && minBet) {
-      iPrimeCasino.methods.bet(prime.prime, isPrime).send({
-        value: minBet,
-        from: address
-      });
-    }
-  };
-
-  const newPrime = React.useCallback(
-    (prime: string) => {
-      if (iPrimeCasino && minBet) {
-        iPrimeCasino.methods.request(prime).send({
-          value: minBet,
-          from: address
-        });
-      }
-    },
-    [address, iPrimeCasino, minBet]
-  );
-
-  const handleNewPrimeSubmit = React.useCallback(
-    e => {
-      e.preventDefault();
-      if (minBet && inputRef.current) {
-        newPrime(inputRef.current.value);
-        inputRef.current.value = '';
-      }
-    },
-    [minBet, newPrime]
-  );
-
-  const registerResult = (prime: Prime) => {
-    if (iEnforcerMock) {
-      const path =
-        '0x1100000000000000000000000000000000000000000000000000000000000011';
-      iEnforcerMock.methods
-        .registerResult(prime.taskHash, path, '0x00')
-        .send({ from: address });
+  const handleNewPrimeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (inputRef.current) {
+      store.newPrime(inputRef.current.value);
+      inputRef.current.value = '';
     }
   };
 
   const now = Math.round(Date.now() / 1000);
   const [completed, pending] = partition(
-    primes,
+    store.primes,
     prime =>
       prime.results.length === 1 &&
       prime.status.challengeEndTime.lte(now) &&
@@ -178,19 +106,20 @@ const App: React.FC = () => {
           is&nbsp;probably prime or not under the Miller-Rabin test.
         </IntroText>
         <IntroText>
-          A bet takes {minBet && web3.utils.fromWei(minBet.toString())} ETH. You
-          can either propose a new probably prime or&nbsp;stake yes/no on an
-          existing one.
+          A bet takes{' '}
+          {store.minBet && store.web3.utils.fromWei(store.minBet.toString())}{' '}
+          ETH. You can either propose a new probably prime or&nbsp;stake yes/no
+          on an existing one.
         </IntroText>
         <IntroText>Have fun!</IntroText>
       </Header>
       <Divider />
-      {!address && (
+      {!store.address && (
         <>
           <Text fontSize={20}>Unlock your wallet</Text>
         </>
       )}
-      {address && (
+      {store.address && (
         <>
           <Form onSubmit={handleNewPrimeSubmit}>
             <PrimeInput ref={inputRef} placeholder="Number" />
@@ -220,8 +149,12 @@ const App: React.FC = () => {
               {pending.map(prime => (
                 <tr key={prime.prime.toString()}>
                   <td>{prime.prime.toString()}</td>
-                  <td>{web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
-                  <td>{web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
+                  <td>
+                    {store.web3.utils.fromWei(prime.sumYes.toString())} ETH
+                  </td>
+                  <td>
+                    {store.web3.utils.fromWei(prime.sumNo.toString())} ETH
+                  </td>
                   <td>
                     {prime.results.length === 0 && (
                       <>
@@ -249,7 +182,7 @@ const App: React.FC = () => {
                         <>
                           <StakeButton
                             onClick={() => {
-                              bet(prime, true);
+                              store.bet(prime, true);
                             }}
                           >
                             <span role="img" aria-label="Yes">
@@ -258,7 +191,7 @@ const App: React.FC = () => {
                           </StakeButton>
                           <StakeButton
                             onClick={() => {
-                              bet(prime, false);
+                              store.bet(prime, false);
                             }}
                           >
                             <span role="img" aria-label="No">
@@ -272,7 +205,7 @@ const App: React.FC = () => {
                       <StakeButton
                         borderColor="red"
                         onClick={() => {
-                          registerResult(prime);
+                          store.registerResult(prime);
                         }}
                       >
                         registerResult
@@ -311,6 +244,6 @@ const App: React.FC = () => {
       )}
     </Container>
   );
-};
+});
 
 export default App;

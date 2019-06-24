@@ -115,6 +115,29 @@
     "type": "event"
   },
   {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_candidate",
+        "type": "uint256"
+      },
+      {
+        "name": "_bettor",
+        "type": "address"
+      }
+    ],
+    "name": "getBet",
+    "outputs": [
+      {
+        "name": "",
+        "type": "int256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [
       {
