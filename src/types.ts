@@ -7,6 +7,7 @@ export type Prime = {
   results: Result[];
   sumYes: BigNumber;
   sumNo: BigNumber;
+  myBets: BigNumber | null;
 };
 
 export type Status = {

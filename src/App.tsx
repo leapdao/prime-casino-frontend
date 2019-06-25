@@ -92,7 +92,8 @@ const App: React.FC = observer(() => {
     prime =>
       prime.results.length === 1 &&
       prime.status.challengeEndTime.lte(now) &&
-      prime.status.challengeEndTime.gt(0)
+      prime.status.challengeEndTime.gt(0) &&
+      (!prime.myBets || prime.myBets.eq(0))
   );
 
   return (
@@ -114,16 +115,15 @@ const App: React.FC = observer(() => {
         <IntroText>Have fun!</IntroText>
       </Header>
       <Divider />
-      {!store.address && (
-        <>
-          <Text fontSize={20}>Unlock your wallet</Text>
-        </>
-      )}
-      {store.address && (
+      {!store.address && <Text fontSize={20}>Unlock your wallet</Text>}
+      {store.address && !store.loaded && <Text fontSize={20}>Loading...</Text>}
+      {store.address && store.loaded && (
         <>
           <Form onSubmit={handleNewPrimeSubmit}>
             <PrimeInput ref={inputRef} placeholder="Number" />
-            <Button type="submit">New prime</Button>
+            <Button type="submit" disabled={!store.address}>
+              New prime
+            </Button>
           </Form>
           <Divider />
           <Heading>Pending bets</Heading>
@@ -146,6 +146,11 @@ const App: React.FC = observer(() => {
               </tr>
             </thead>
             <tbody>
+              {pending.length === 0 && (
+                <tr>
+                  <td colSpan={5}>No candidates</td>
+                </tr>
+              )}
               {pending.map(prime => (
                 <tr key={prime.prime.toString()}>
                   <td>{prime.prime.toString()}</td>
@@ -165,7 +170,17 @@ const App: React.FC = observer(() => {
                       </>
                     )}
                     {prime.results.length === 1 && (
-                      <>{prime.status.challengeEndTime.gte(now) && 'Solved'}</>
+                      <>
+                        {prime.status.challengeEndTime.gte(now) && 'Solved'}
+                        {prime.status.challengeEndTime.lte(now) &&
+                          prime.status.challengeEndTime.gt(0) &&
+                          prime.myBets &&
+                          !prime.myBets.eq(0) && (
+                            <Button onClick={() => store.payout(prime)}>
+                              Payout
+                            </Button>
+                          )}
+                      </>
                     )}
                     {prime.results.length > 1 && (
                       <>
@@ -216,30 +231,34 @@ const App: React.FC = observer(() => {
               ))}
             </tbody>
           </Table>
-          <Divider />
-          <Heading>Completed bets</Heading>
-          <Table>
-            <thead>
-              <tr>
-                <th>Number</th>
-                <th>Result</th>
-              </tr>
-            </thead>
-            <tbody>
-              {completed.map(prime => (
-                <tr key={prime.prime.toString()}>
-                  <td>{prime.prime.toString()}</td>
-                  <td>
-                    <span role="img" aria-label="Yes">
-                      {prime.results[0].result === '0x00' && '👎'}
-                      {prime.results[0].result === '0x01' && '👍'}
-                      {prime.results[0].result === '0x02' && '¯_(ツ)_/¯'}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+          {completed.length > 0 && (
+            <>
+              <Divider />
+              <Heading>Completed bets</Heading>
+              <Table>
+                <thead>
+                  <tr>
+                    <th>Number</th>
+                    <th>Result</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {completed.map(prime => (
+                    <tr key={prime.prime.toString()}>
+                      <td>{prime.prime.toString()}</td>
+                      <td>
+                        <span role="img" aria-label="Yes">
+                          {prime.results[0].result === '0x00' && '👎'}
+                          {prime.results[0].result === '0x01' && '👍'}
+                          {prime.results[0].result === '0x02' && '¯_(ツ)_/¯'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </>
+          )}
         </>
       )}
     </Container>

@@ -4,7 +4,7 @@ import { Contract, EventData } from 'web3-eth-contract';
 
 import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
-import { Prime, Status } from './types.js';
+import { Prime, Status, Result } from './types.js';
 import BigNumber from 'bignumber.js';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
@@ -15,6 +15,9 @@ class Store {
   public web3: Web3;
   public primeCasino: Contract;
   public enforcerMock: Contract;
+
+  @observable
+  public loaded = false;
 
   @observable.deep
   public primes: Prime[] = [];
@@ -27,6 +30,9 @@ class Store {
 
   @observable
   public address: string | null = null;
+
+  @observable
+  public myBets: { [key: string]: BigNumber } = {};
 
   @computed
   public get iPrimeCasino() {
@@ -63,6 +69,23 @@ class Store {
       PRIME_CASINO_ADDR
     );
 
+    const injectedProvider = (window as any).ethereum;
+    if (injectedProvider) {
+      injectedProvider
+        .enable()
+        .then((addrs: string[]) => {
+          this.iWeb3 = new Web3(injectedProvider);
+          this.address = addrs[0];
+        })
+        .finally(() => {
+          this.contractsSubscribe();
+        });
+    } else {
+      this.contractsSubscribe();
+    }
+  }
+
+  private contractsSubscribe() {
     this.primeCasino
       .getPastEvents('allEvents', { fromBlock: 0 })
       .then(async events => {
@@ -70,6 +93,7 @@ class Store {
           events.filter(({ event }) => event === 'NewCandidatePrime')
         );
         this.addBets(events.filter(({ event }) => event === 'NewBet'));
+        this.loaded = true;
       });
 
     this.primeCasino.events.allEvents(
@@ -80,6 +104,14 @@ class Store {
         }
         if (event.event === 'NewBet') {
           this.addBets([event]);
+          const index = this.primes.findIndex(prime =>
+            prime.prime.eq(event.returnValues.number)
+          );
+          if (index) {
+            this.getMyBets(this.primes[index].prime).then(myBets => {
+              this.primes[index].myBets = myBets;
+            });
+          }
         }
       }
     );
@@ -96,14 +128,6 @@ class Store {
         this.registerResults([event]);
       }
     );
-
-    const injectedProvider = (window as any).ethereum;
-    if (injectedProvider) {
-      injectedProvider.enable().then((addrs: string[]) => {
-        this.iWeb3 = new Web3(injectedProvider);
-        this.address = addrs[0];
-      });
-    }
   }
 
   public newPrime(prime: string) {
@@ -119,6 +143,14 @@ class Store {
     if (this.iPrimeCasino && this.minBet) {
       this.iPrimeCasino.methods.bet(prime.prime, isPrime).send({
         value: this.minBet,
+        from: this.address
+      });
+    }
+  }
+
+  public payout(prime: Prime) {
+    if (this.iPrimeCasino) {
+      this.iPrimeCasino.methods.payout(prime.prime).send({
         from: this.address
       });
     }
@@ -159,18 +191,18 @@ class Store {
     return this.primeCasino.methods
       .getStatus(number)
       .call()
-      .then(
-        ({
-          _challengeEndTime,
-          _pathRoots
-        }: {
-          _challengeEndTime: BigNumber;
-          _pathRoots: string[];
-        }) => ({
-          challengeEndTime: _challengeEndTime,
-          pathRoots: _pathRoots
-        })
-      );
+      .then((status: any) => ({
+        challengeEndTime: status._challengeEndTime,
+        pathRoots: status._pathRoots
+      }));
+  }
+
+  private async getMyBets(prime: BigNumber): Promise<BigNumber | null> {
+    if (!this.address) {
+      return null;
+    }
+
+    return this.primeCasino.methods.getBet(prime, this.address).call();
   }
 
   @action
@@ -178,21 +210,24 @@ class Store {
     const updates: any[] = [];
     for (const event of events) {
       const status = await this.getStatus(event.returnValues.number);
-      const results = await this.getResults(
-        event.returnValues.taskHash,
-        status.pathRoots
+      const [results, myBets]: [Result[], BigNumber | null] = await Promise.all(
+        [
+          this.getResults(event.returnValues.taskHash, status.pathRoots),
+          this.getMyBets(event.returnValues.number)
+        ]
       );
-      updates.push([event, status, results]);
+      updates.push([event, status, results, myBets]);
     }
     runInAction(() => {
-      for (const [event, status, results] of updates) {
+      for (const [event, status, results, myBets] of updates) {
         this.primes.push({
           prime: event.returnValues.number,
           taskHash: event.returnValues.taskHash,
           sumYes: event.returnValues.sumYes,
           sumNo: event.returnValues.sumNo,
           status,
-          results
+          results,
+          myBets
         });
       }
     });
