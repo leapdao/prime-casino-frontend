@@ -1,6 +1,7 @@
 import Web3 from 'web3';
-import { observable, computed, action, runInAction } from 'mobx';
+import { observable, computed, action, runInAction, autorun, toJS } from 'mobx';
 import { Contract, EventData } from 'web3-eth-contract';
+import autobind from 'autobind-decorator';
 
 import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
@@ -33,6 +34,9 @@ class Store {
 
   @observable
   public myBets: { [key: string]: BigNumber } = {};
+
+  @observable
+  public latestBlockSynced = 0;
 
   @computed
   public get iPrimeCasino() {
@@ -68,6 +72,7 @@ class Store {
       primeCasinoABI as any,
       PRIME_CASINO_ADDR
     );
+    this.restore();
 
     const injectedProvider = (window as any).ethereum;
     if (injectedProvider) {
@@ -83,16 +88,63 @@ class Store {
     } else {
       this.contractsSubscribe();
     }
+
+    autorun(this.autosave);
+  }
+
+  private restore() {
+    const cache = JSON.parse(
+      localStorage.getItem(`cache_${this.primeCasino.address}`) || '{}'
+    );
+    if (cache.primes) {
+      this.primes = cache.primes.map((prime: any) => ({
+        ...prime,
+        prime: new BigNumber(prime.prime),
+        status: {
+          challengeEndTime: new BigNumber(prime.status.challengeEndTime),
+          pathRoots: prime.status.pathRoots
+        },
+        sumYes: new BigNumber(prime.sumYes),
+        sumNo: new BigNumber(prime.sumNo),
+        myBets: prime.myBets && new BigNumber(prime.myBets)
+      }));
+      this.latestBlockSynced = cache.latestBlockSynced;
+    }
+  }
+
+  @autobind
+  private autosave() {
+    localStorage.setItem(
+      `cache_${this.primeCasino.address}`,
+      JSON.stringify({
+        primes: toJS(
+          this.primes.map(prime => ({
+            ...prime,
+            prime: prime.prime.toString(),
+            status: {
+              challengeEndTime: prime.status.challengeEndTime.toString(),
+              pathRoots: prime.status.pathRoots
+            },
+            sumYes: prime.sumYes.toString(),
+            sumNo: prime.sumNo.toString(),
+            myBets: prime.myBets && prime.myBets.toString()
+          }))
+        ),
+        latestBlockSynced: this.latestBlockSynced
+      })
+    );
   }
 
   private contractsSubscribe() {
     this.primeCasino
-      .getPastEvents('allEvents', { fromBlock: 0 })
+      .getPastEvents('allEvents', { fromBlock: this.latestBlockSynced })
       .then(async events => {
         await this.addPrimes(
           events.filter(({ event }) => event === 'NewCandidatePrime')
         );
         this.addBets(events.filter(({ event }) => event === 'NewBet'));
+        this.latestBlockSynced =
+          events.length > 0 ? events[events.length - 1].blockNumber : 0;
         this.loaded = true;
       });
 
@@ -113,6 +165,7 @@ class Store {
             });
           }
         }
+        this.latestBlockSynced = event.blockNumber;
       }
     );
     this.primeCasino.methods
