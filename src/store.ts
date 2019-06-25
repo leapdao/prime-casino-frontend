@@ -2,11 +2,11 @@ import Web3 from 'web3';
 import { observable, computed, action, runInAction, autorun, toJS } from 'mobx';
 import { Contract, EventData } from 'web3-eth-contract';
 import autobind from 'autobind-decorator';
+import BigNumber from 'bignumber.js';
 
 import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
 import { Prime, Status, Result } from './types.js';
-import BigNumber from 'bignumber.js';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
 const ENFORCER_MOCK_ADDR = '0x5861278f6cfda2aaa7642b1246e2661835f1287a';
@@ -183,6 +183,7 @@ class Store {
     );
   }
 
+  @autobind
   public newPrime(prime: string) {
     if (this.iPrimeCasino && this.minBet) {
       this.iPrimeCasino.methods.request(prime).send({

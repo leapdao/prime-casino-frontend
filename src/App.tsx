@@ -1,31 +1,43 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Heading, Button, Text } from 'rebass';
+import { Heading, Text, Box } from 'rebass';
 import partition from 'lodash/partition';
 import { store } from './store';
-import {
-  Container,
-  Header,
-  IntroText,
-  Divider,
-  Form,
-  PrimeInput,
-  Global
-} from './styles';
 import { PendingBets } from './PendingBets';
 import { CompletedBets } from './CompletedBets';
+import { PrimeForm } from './PrimeForm';
+import styled, { createGlobalStyle } from 'styled-components';
 
-const App: React.FC = observer(() => {
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
+export const Global = createGlobalStyle`
+  * {
+    box-sizing: border-box;
+  }
+`;
 
-  const handleNewPrimeSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (inputRef.current) {
-      store.newPrime(inputRef.current.value);
-      inputRef.current.value = '';
-    }
-  };
+const Container = styled(Box)`
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+`;
 
+const IntroText = styled(Text)`
+  & + & {
+    margin-top: 10px;
+  }
+`;
+
+const Header = styled(Box)`
+  width: 70%;
+  margin-bottom: 20px;
+`;
+
+const Divider = styled.hr`
+  border: 0;
+  border-bottom: 1px solid #ccc;
+  margin: 30px 0;
+`;
+
+export const App: React.FC = observer(() => {
   const now = Math.round(Date.now() / 1000);
   const [completed, pending] = partition(
     store.primes,
@@ -59,12 +71,7 @@ const App: React.FC = observer(() => {
       {store.address && !store.loaded && <Text fontSize={20}>Loading...</Text>}
       {store.address && store.loaded && (
         <>
-          <Form onSubmit={handleNewPrimeSubmit}>
-            <PrimeInput ref={inputRef} placeholder="Number" />
-            <Button type="submit" disabled={!store.address}>
-              New prime
-            </Button>
-          </Form>
+          <PrimeForm onSubmit={store.newPrime} />
           <Divider />
           <PendingBets primes={pending} />
 
@@ -80,5 +87,3 @@ const App: React.FC = observer(() => {
     </Container>
   );
 });
-
-export default App;

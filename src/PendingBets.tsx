@@ -1,9 +1,24 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Heading, Button } from 'rebass';
+import styled from 'styled-components';
 import { store } from './store';
-import { Table, StakeButton } from './styles';
+import { Table } from './Table';
 import { Prime } from './types';
+
+const StakeButton = styled(Button)`
+  padding: 0 8px 0 12px;
+  text-align: center;
+  height: 30px;
+  font-size: 14px;
+  background-color: transparent;
+  border: 1px solid #0000ff;
+  color: #000000;
+
+  & + & {
+    margin-left: 10px;
+  }
+`;
 
 type Props = {
   primes: Prime[];

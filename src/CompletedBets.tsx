@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heading } from 'rebass';
-import { Table } from './styles';
+import { Table } from './Table';
 import { Prime } from './types';
 
 type Props = {
