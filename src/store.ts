@@ -150,9 +150,14 @@ class Store {
 
   public payout(prime: Prime) {
     if (this.iPrimeCasino) {
-      this.iPrimeCasino.methods.payout(prime.prime).send({
-        from: this.address
-      });
+      this.iPrimeCasino.methods
+        .payout(prime.prime)
+        .send({
+          from: this.address
+        })
+        .then(() => {
+          prime.myBets = null;
+        });
     }
   }
 
