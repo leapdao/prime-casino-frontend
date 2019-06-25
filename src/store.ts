@@ -9,8 +9,8 @@ import { Prime, Status, Result } from './types.js';
 import BigNumber from 'bignumber.js';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const ENFORCER_MOCK_ADDR = '0x3339e0bde0170b7e49f55ef93460f2c7cad7469c';
-const PRIME_CASINO_ADDR = '0x67e39702669b74bb3d5cb5b2c9f17b3c45f14d56';
+const ENFORCER_MOCK_ADDR = '0x5861278f6cfda2aaa7642b1246e2661835f1287a';
+const PRIME_CASINO_ADDR = '0x9e9466e7d739242d342d094b8f061df9106809af';
 
 class Store {
   public web3: Web3;
@@ -194,7 +194,7 @@ class Store {
 
   public bet(prime: Prime, isPrime: boolean) {
     if (this.iPrimeCasino && this.minBet) {
-      this.iPrimeCasino.methods.bet(prime.prime, isPrime).send({
+      this.iPrimeCasino.methods.bet(prime.prime.toString(), isPrime).send({
         value: this.minBet,
         from: this.address
       });
@@ -267,14 +267,21 @@ class Store {
   private async addPrimes(events: EventData[]) {
     const updates: any[] = [];
     for (const event of events) {
-      const status = await this.getStatus(event.returnValues.number);
-      const [results, myBets]: [Result[], BigNumber | null] = await Promise.all(
-        [
+      if (
+        this.primes.findIndex(
+          p => p.taskHash === event.returnValues.taskHash
+        ) === -1
+      ) {
+        const status = await this.getStatus(event.returnValues.number);
+        const [results, myBets]: [
+          Result[],
+          BigNumber | null
+        ] = await Promise.all([
           this.getResults(event.returnValues.taskHash, status.pathRoots),
           this.getMyBets(event.returnValues.number)
-        ]
-      );
-      updates.push([event, status, results, myBets]);
+        ]);
+        updates.push([event, status, results, myBets]);
+      }
     }
     runInAction(() => {
       for (const [event, status, results, myBets] of updates) {

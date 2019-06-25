@@ -166,7 +166,7 @@ const App: React.FC = observer(() => {
                         {prime.status.challengeEndTime.gte(now) && 'Requested'}
                         {prime.status.challengeEndTime.lte(now) &&
                           prime.status.challengeEndTime.gt(0) &&
-                          'Not solved (what to do?)'}
+                          'Requested'}
                       </>
                     )}
                     {prime.results.length === 1 && (
@@ -192,29 +192,29 @@ const App: React.FC = observer(() => {
                     )}
                   </td>
                   <td>
-                    {prime.status.challengeEndTime.gte(now) &&
-                      prime.results.length > 0 && (
-                        <>
-                          <StakeButton
-                            onClick={() => {
-                              store.bet(prime, true);
-                            }}
-                          >
-                            <span role="img" aria-label="Yes">
-                              👍
-                            </span>
-                          </StakeButton>
-                          <StakeButton
-                            onClick={() => {
-                              store.bet(prime, false);
-                            }}
-                          >
-                            <span role="img" aria-label="No">
-                              👎
-                            </span>
-                          </StakeButton>
-                        </>
-                      )}
+                    {(prime.status.challengeEndTime.gte(now) ||
+                      prime.status.challengeEndTime.eq(1)) && (
+                      <>
+                        <StakeButton
+                          onClick={() => {
+                            store.bet(prime, true);
+                          }}
+                        >
+                          <span role="img" aria-label="Yes">
+                            👍
+                          </span>
+                        </StakeButton>
+                        <StakeButton
+                          onClick={() => {
+                            store.bet(prime, false);
+                          }}
+                        >
+                          <span role="img" aria-label="No">
+                            👎
+                          </span>
+                        </StakeButton>
+                      </>
+                    )}
 
                     {prime.results.length === 0 && (
                       <StakeButton
