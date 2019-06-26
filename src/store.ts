@@ -1,5 +1,5 @@
 import Web3 from 'web3';
-import { observable, computed, action, runInAction, autorun, toJS } from 'mobx';
+import { observable, computed, action, autorun, toJS } from 'mobx';
 import { Contract, EventData } from 'web3-eth-contract';
 import autobind from 'autobind-decorator';
 import BigNumber from 'bignumber.js';
@@ -97,17 +97,19 @@ class Store {
       localStorage.getItem(`cache_${this.primeCasino.address}`) || '{}'
     );
     if (cache.primes) {
-      this.primes = cache.primes.map((prime: any) => ({
-        ...prime,
-        prime: new BigNumber(prime.prime),
-        status: {
-          challengeEndTime: new BigNumber(prime.status.challengeEndTime),
-          pathRoots: prime.status.pathRoots
-        },
-        sumYes: new BigNumber(prime.sumYes),
-        sumNo: new BigNumber(prime.sumNo),
-        myBets: prime.myBets && new BigNumber(prime.myBets)
-      }));
+      this.primes = cache.primes.map(
+        ({ prime, status, sumYes, sumNo, myBets, ...rest }: any) => ({
+          ...rest,
+          prime: new BigNumber(prime),
+          status: {
+            challengeEndTime: new BigNumber(status.challengeEndTime),
+            pathRoots: status.pathRoots
+          },
+          sumYes: new BigNumber(sumYes),
+          sumNo: new BigNumber(sumNo),
+          myBets: myBets && new BigNumber(myBets)
+        })
+      );
       this.latestBlockSynced = cache.latestBlockSynced;
     }
   }
@@ -118,17 +120,19 @@ class Store {
       `cache_${this.primeCasino.address}`,
       JSON.stringify({
         primes: toJS(
-          this.primes.map(prime => ({
-            ...prime,
-            prime: prime.prime.toString(),
-            status: {
-              challengeEndTime: prime.status.challengeEndTime.toString(),
-              pathRoots: prime.status.pathRoots
-            },
-            sumYes: prime.sumYes.toString(),
-            sumNo: prime.sumNo.toString(),
-            myBets: prime.myBets && prime.myBets.toString()
-          }))
+          this.primes.map(
+            ({ prime, status, sumYes, sumNo, myBets, ...rest }) => ({
+              ...rest,
+              prime: prime.toString(),
+              status: {
+                challengeEndTime: status.challengeEndTime.toString(),
+                pathRoots: status.pathRoots
+              },
+              sumYes: sumYes.toString(),
+              sumNo: sumNo.toString(),
+              myBets: myBets && myBets.toString()
+            })
+          )
         ),
         latestBlockSynced: this.latestBlockSynced
       })
@@ -236,10 +240,10 @@ class Store {
               _pathRoot: pathRoot
             }
           })
-          .then(events => {
+          .then(([{ returnValues: { _pathRoot, result } }]) => {
             return {
-              pathRoot: events[0].returnValues._pathRoot,
-              result: events[0].returnValues.result
+              pathRoot: _pathRoot,
+              result
             };
           });
       })
@@ -261,65 +265,67 @@ class Store {
       return null;
     }
 
-    return this.primeCasino.methods.getBet(prime, this.address).call();
+    return this.primeCasino.methods
+      .getBet(prime.toString(), this.address)
+      .call();
   }
 
   @action
   private async addPrimes(events: EventData[]) {
-    const updates: any[] = [];
-    for (const event of events) {
-      if (
-        this.primes.findIndex(
-          p => p.taskHash === event.returnValues.taskHash
-        ) === -1
-      ) {
-        const status = await this.getStatus(event.returnValues.number);
-        const [results, myBets]: [
-          Result[],
-          BigNumber | null
-        ] = await Promise.all([
-          this.getResults(event.returnValues.taskHash, status.pathRoots),
-          this.getMyBets(event.returnValues.number)
-        ]);
-        updates.push([event, status, results, myBets]);
-      }
-    }
-    runInAction(() => {
-      for (const [event, status, results, myBets] of updates) {
-        this.primes.push({
-          prime: event.returnValues.number,
-          taskHash: event.returnValues.taskHash,
-          sumYes: event.returnValues.sumYes,
-          sumNo: event.returnValues.sumNo,
-          status,
-          results,
-          myBets
-        });
-      }
-    });
+    const updates: any[] = await Promise.all(
+      events
+        .filter(
+          ({ returnValues: { taskHash } }) =>
+            this.primes.findIndex(p => p.taskHash === taskHash) === -1
+        )
+        .map(async ({ returnValues: { number, taskHash, sumYes, sumNo } }) => {
+          const status = await this.getStatus(number);
+          const [results, myBets]: [
+            Result[],
+            BigNumber | null
+          ] = await Promise.all([
+            this.getResults(taskHash, status.pathRoots),
+            this.getMyBets(number)
+          ]);
+
+          return {
+            prime: number,
+            taskHash: taskHash,
+            sumYes: sumYes,
+            sumNo: sumNo,
+            status,
+            results,
+            myBets
+          };
+        })
+    );
+
+    this.primes.push(...updates);
   }
 
   @action
   private addBets(events: EventData[]) {
-    for (const event of events) {
-      const index = this.primes.findIndex(prime =>
-        prime.prime.eq(event.returnValues.number)
-      );
+    for (const {
+      returnValues: { number, sumYes, sumNo }
+    } of events) {
+      const index = this.primes.findIndex(prime => prime.prime.eq(number));
       if (index !== -1) {
-        this.primes[index].sumYes = event.returnValues.sumYes;
-        this.primes[index].sumNo = event.returnValues.sumNo;
+        this.primes[index].sumYes = sumYes;
+        this.primes[index].sumNo = sumNo;
       }
     }
   }
 
   @action
   private registerResults(events: EventData[]) {
-    for (const event of events) {
+    for (const {
+      returnValues: { _taskHash, result, _pathRoot }
+    } of events) {
       const index = this.primes.findIndex(
-        prime => prime.taskHash === event.returnValues._taskHash
+        prime => prime.taskHash === _taskHash
       );
-      this.primes[index].results.push(event.returnValues.result);
-      this.primes[index].status.pathRoots.push(event.returnValues._pathRoot);
+      this.primes[index].results.push(result);
+      this.primes[index].status.pathRoots.push(_pathRoot);
     }
   }
 }
