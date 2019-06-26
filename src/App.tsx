@@ -20,21 +20,30 @@ const Container = styled(Box)`
   margin: 0 auto;
 `;
 
+const Header = styled(Box)`
+  width: 70%;
+  margin-bottom: 20px;
+`;
+
 const IntroText = styled(Text)`
   & + & {
     margin-top: 10px;
   }
 `;
 
-const Header = styled(Box)`
-  width: 70%;
-  margin-bottom: 20px;
+const Title = styled(Heading)`
+  font-size: 36px;
+  margin-bottom: 10px;
 `;
 
 const Divider = styled.hr`
   border: 0;
   border-bottom: 1px solid #ccc;
   margin: 30px 0;
+`;
+
+const LoadingMessage = styled(Text)`
+  font-size: 20px;
 `;
 
 export const App: React.FC = observer(() => {
@@ -51,9 +60,7 @@ export const App: React.FC = observer(() => {
   return (
     <Container>
       <Header>
-        <Heading fontSize={36} marginBottom={10}>
-          Prime Casino
-        </Heading>
+        <Title>Prime Casino</Title>
         <IntroText>
           Welcome to Prime Casino. Here you can bet on whether a number
           is&nbsp;probably prime or not under the Miller-Rabin test.
@@ -67,8 +74,10 @@ export const App: React.FC = observer(() => {
         <IntroText>Have fun!</IntroText>
       </Header>
       <Divider />
-      {!store.address && <Text fontSize={20}>Unlock your wallet</Text>}
-      {store.address && !store.loaded && <Text fontSize={20}>Loading...</Text>}
+      {!store.address && <LoadingMessage>Unlock your wallet</LoadingMessage>}
+      {store.address && !store.loaded && (
+        <LoadingMessage>Loading...</LoadingMessage>
+      )}
       {store.address && store.loaded && (
         <>
           <PrimeForm onSubmit={store.newPrime} />
