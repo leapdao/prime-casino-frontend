@@ -26,7 +26,7 @@ export const CompletedBets: React.FC<Props> = ({ primes }) => {
                 <span role="img" aria-label="Yes">
                   {prime.results[0].result === '0x00' && '👎'}
                   {prime.results[0].result === '0x01' && '👍'}
-                  {prime.results[0].result === '0x02' && '¯_(ツ)_/¯'}
+                  {prime.results[0].result === '0x02' && '¯\\_(ツ)_/¯'}
                 </span>
               </td>
             </tr>

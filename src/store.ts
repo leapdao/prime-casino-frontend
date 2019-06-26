@@ -238,7 +238,7 @@ class Store {
           })
           .then(events => {
             return {
-              pathRoot: events[0].returnValues._taskHash,
+              pathRoot: events[0].returnValues._pathRoot,
               result: events[0].returnValues.result
             };
           });
