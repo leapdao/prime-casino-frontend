@@ -15,8 +15,9 @@ const StakeButton = styled(Button)`
   border: 1px solid #0000ff;
   color: #000000;
 
-  & + & {
-    margin-left: 10px;
+  margin-right: 10px;
+  &:last-of-type {
+    margin-right: 0;
   }
 `;
 
