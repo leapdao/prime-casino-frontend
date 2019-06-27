@@ -19,14 +19,14 @@ export const CompletedBets: React.FC<Props> = ({ primes }) => {
           </tr>
         </thead>
         <tbody>
-          {primes.map(prime => (
-            <tr key={prime.prime.toString()}>
-              <td>{prime.prime.toString()}</td>
+          {primes.map(({ number, results }) => (
+            <tr key={number.toString()}>
+              <td>{number.toString()}</td>
               <td>
                 <span role="img" aria-label="Yes">
-                  {prime.results[0].result === '0x00' && '👎'}
-                  {prime.results[0].result === '0x01' && '👍'}
-                  {prime.results[0].result === '0x02' && '¯\\_(ツ)_/¯'}
+                  {results[0].result === '0x00' && '👎'}
+                  {results[0].result === '0x01' && '👍'}
+                  {results[0].result === '0x02' && '¯\\_(ツ)_/¯'}
                 </span>
               </td>
             </tr>

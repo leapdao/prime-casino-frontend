@@ -121,9 +121,9 @@ class Store {
       JSON.stringify({
         primes: toJS(
           this.primes.map(
-            ({ prime, status, sumYes, sumNo, myBets, ...rest }) => ({
+            ({ number, status, sumYes, sumNo, myBets, ...rest }) => ({
               ...rest,
-              prime: prime.toString(),
+              number: number.toString(),
               status: {
                 challengeEndTime: status.challengeEndTime.toString(),
                 pathRoots: status.pathRoots
@@ -161,10 +161,10 @@ class Store {
         if (event.event === 'NewBet') {
           this.addBets([event]);
           const index = this.primes.findIndex(prime =>
-            prime.prime.eq(event.returnValues.number)
+            prime.number.eq(event.returnValues.number)
           );
           if (index) {
-            this.getMyBets(this.primes[index].prime).then(myBets => {
+            this.getMyBets(this.primes[index].number).then(myBets => {
               this.primes[index].myBets = myBets;
             });
           }
@@ -199,7 +199,7 @@ class Store {
 
   public bet(prime: Prime, isPrime: boolean) {
     if (this.iPrimeCasino && this.minBet) {
-      this.iPrimeCasino.methods.bet(prime.prime.toString(), isPrime).send({
+      this.iPrimeCasino.methods.bet(prime.number.toString(), isPrime).send({
         value: this.minBet,
         from: this.address
       });
@@ -209,7 +209,7 @@ class Store {
   public payout(prime: Prime) {
     if (this.iPrimeCasino) {
       this.iPrimeCasino.methods
-        .payout(prime.prime.toString())
+        .payout(prime.number.toString())
         .send({
           from: this.address
         })
@@ -308,7 +308,7 @@ class Store {
     for (const {
       returnValues: { number, sumYes, sumNo }
     } of events) {
-      const index = this.primes.findIndex(prime => prime.prime.eq(number));
+      const index = this.primes.findIndex(prime => prime.number.eq(number));
       if (index !== -1) {
         this.primes[index].sumYes = sumYes;
         this.primes[index].sumNo = sumNo;

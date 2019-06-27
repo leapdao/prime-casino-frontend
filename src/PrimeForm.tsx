@@ -43,7 +43,7 @@ const getError = (value: string, primes: Prime[]) => {
     return 'Required';
   }
 
-  if (primes.findIndex(p => p.prime.eq(value)) !== -1) {
+  if (primes.findIndex(p => p.number.eq(value)) !== -1) {
     return 'Number is proposed already';
   }
 

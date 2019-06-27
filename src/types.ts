@@ -1,7 +1,7 @@
 import BigNumber from 'bignumber.js';
 
 export type Prime = {
-  prime: BigNumber;
+  number: BigNumber;
   taskHash: string;
   status: Status;
   results: Result[];

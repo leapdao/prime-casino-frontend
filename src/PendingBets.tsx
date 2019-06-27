@@ -56,8 +56,8 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
             </tr>
           )}
           {primes.map(prime => (
-            <tr key={prime.prime.toString()}>
-              <td>{prime.prime.toString()}</td>
+            <tr key={prime.number.toString()}>
+              <td>{prime.number.toString()}</td>
               <td>{store.web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
               <td>{store.web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
               <td>
