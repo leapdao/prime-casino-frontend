@@ -55,93 +55,96 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
               <td colSpan={5}>No candidates</td>
             </tr>
           )}
-          {primes.map(prime => (
-            <tr key={prime.number.toString()}>
-              <td>{prime.number.toString()}</td>
-              <td>{store.web3.utils.fromWei(prime.sumYes.toString())} ETH</td>
-              <td>{store.web3.utils.fromWei(prime.sumNo.toString())} ETH</td>
-              <td>
-                {prime.results.length === 0 && (
-                  <>
-                    {prime.status.challengeEndTime.gte(now) && 'Requested'}
-                    {prime.status.challengeEndTime.lte(now) &&
-                      prime.status.challengeEndTime.gt(0) && (
-                        <>
-                          Not solved{' '}
-                          {prime.myBets && !prime.myBets.eq(0) && (
-                            <Button onClick={() => store.payout(prime)}>
-                              Payout
-                            </Button>
-                          )}
-                        </>
-                      )}
-                  </>
-                )}
-                {prime.results.length === 1 && (
-                  <>
-                    {prime.status.challengeEndTime.gte(now) && 'Solved'}
-                    {prime.status.challengeEndTime.lte(now) &&
-                      prime.status.challengeEndTime.gt(0) &&
-                      prime.myBets &&
-                      !prime.myBets.eq(0) && (
-                        <Button onClick={() => store.payout(prime)}>
-                          Payout
-                        </Button>
-                      )}
-                  </>
-                )}
-                {prime.results.length > 1 && (
-                  <>
-                    {prime.status.challengeEndTime.gte(now) && 'Challenged'}
-                    {prime.status.challengeEndTime.lte(now) &&
-                      prime.status.challengeEndTime.gt(0) && (
-                        <>
-                          Undetermined,
-                          <br />
-                          contact support
-                        </>
-                      )}
-                  </>
-                )}
-              </td>
-              <td>
-                {(prime.status.challengeEndTime.gte(now) ||
-                  prime.status.challengeEndTime.eq(1)) && (
-                  <>
-                    <StakeButton
-                      onClick={() => {
-                        store.bet(prime, true);
-                      }}
-                    >
-                      <span role="img" aria-label="Yes">
-                        👍
-                      </span>
-                    </StakeButton>
-                    <StakeButton
-                      onClick={() => {
-                        store.bet(prime, false);
-                      }}
-                    >
-                      <span role="img" aria-label="No">
-                        👎
-                      </span>
-                    </StakeButton>
-                  </>
-                )}
+          {primes.map(prime => {
+            const { number, results, sumYes, sumNo, status, myBets } = prime;
+            return (
+              <tr key={number.toString()}>
+                <td>{number.toString()}</td>
+                <td>{store.web3.utils.fromWei(sumYes.toString())} ETH</td>
+                <td>{store.web3.utils.fromWei(sumNo.toString())} ETH</td>
+                <td>
+                  {results.length === 0 && (
+                    <>
+                      {status.challengeEndTime.gte(now) && 'Requested'}
+                      {status.challengeEndTime.lte(now) &&
+                        status.challengeEndTime.gt(0) && (
+                          <>
+                            Not solved{' '}
+                            {myBets && !myBets.eq(0) && (
+                              <Button onClick={() => store.payout(prime)}>
+                                Payout
+                              </Button>
+                            )}
+                          </>
+                        )}
+                    </>
+                  )}
+                  {results.length === 1 && (
+                    <>
+                      {status.challengeEndTime.gte(now) && 'Solved'}
+                      {status.challengeEndTime.lte(now) &&
+                        status.challengeEndTime.gt(0) &&
+                        myBets &&
+                        !myBets.eq(0) && (
+                          <Button onClick={() => store.payout(prime)}>
+                            Payout
+                          </Button>
+                        )}
+                    </>
+                  )}
+                  {results.length > 1 && (
+                    <>
+                      {status.challengeEndTime.gte(now) && 'Challenged'}
+                      {status.challengeEndTime.lte(now) &&
+                        status.challengeEndTime.gt(0) && (
+                          <>
+                            Undetermined,
+                            <br />
+                            contact support
+                          </>
+                        )}
+                    </>
+                  )}
+                </td>
+                <td>
+                  {(status.challengeEndTime.gte(now) ||
+                    status.challengeEndTime.eq(1)) && (
+                    <>
+                      <StakeButton
+                        onClick={() => {
+                          store.bet(prime, true);
+                        }}
+                      >
+                        <span role="img" aria-label="Yes">
+                          👍
+                        </span>
+                      </StakeButton>
+                      <StakeButton
+                        onClick={() => {
+                          store.bet(prime, false);
+                        }}
+                      >
+                        <span role="img" aria-label="No">
+                          👎
+                        </span>
+                      </StakeButton>
+                    </>
+                  )}
 
-                {prime.results.length === 0 && (
-                  <StakeButton
-                    borderColor="red"
-                    onClick={() => {
-                      store.registerResult(prime);
-                    }}
-                  >
-                    registerResult
-                  </StakeButton>
-                )}
-              </td>
-            </tr>
-          ))}
+                  {results.length === 0 && (
+                    <StakeButton
+                      borderColor="red"
+                      onClick={() => {
+                        store.registerResult(prime);
+                      }}
+                    >
+                      registerResult
+                    </StakeButton>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </Table>
     </>
