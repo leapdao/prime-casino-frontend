@@ -92,10 +92,12 @@ class Store {
     autorun(this.autosave);
   }
 
+  private get lsKey() {
+    return `cache__${this.primeCasino.address}`;
+  }
+
   private restore() {
-    const cache = JSON.parse(
-      localStorage.getItem(`cache_${this.primeCasino.address}`) || '{}'
-    );
+    const cache = JSON.parse(localStorage.getItem(this.lsKey) || '{}');
     if (cache.primes) {
       this.primes = cache.primes.map(
         ({ prime, status, sumYes, sumNo, myBets, ...rest }: any) => ({
@@ -117,7 +119,7 @@ class Store {
   @autobind
   private autosave() {
     localStorage.setItem(
-      `cache_${this.primeCasino.address}`,
+      this.lsKey,
       JSON.stringify({
         primes: toJS(
           this.primes.map(
