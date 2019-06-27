@@ -209,7 +209,7 @@ class Store {
   public payout(prime: Prime) {
     if (this.iPrimeCasino) {
       this.iPrimeCasino.methods
-        .payout(prime.prime)
+        .payout(prime.prime.toString())
         .send({
           from: this.address
         })

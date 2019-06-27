@@ -65,8 +65,16 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                   <>
                     {prime.status.challengeEndTime.gte(now) && 'Requested'}
                     {prime.status.challengeEndTime.lte(now) &&
-                      prime.status.challengeEndTime.gt(0) &&
-                      'Requested'}
+                      prime.status.challengeEndTime.gt(0) && (
+                        <>
+                          Not solved{' '}
+                          {prime.myBets && !prime.myBets.eq(0) && (
+                            <Button onClick={() => store.payout(prime)}>
+                              Payout
+                            </Button>
+                          )}
+                        </>
+                      )}
                   </>
                 )}
                 {prime.results.length === 1 && (
