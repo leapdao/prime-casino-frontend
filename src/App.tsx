@@ -26,8 +26,9 @@ const Header = styled(Box)`
 `;
 
 const IntroText = styled(Text)`
-  & + & {
-    margin-top: 10px;
+  margin-bottom: 10px;
+  &:last-of-type {
+    margin-bottom: 0;
   }
 `;
 
