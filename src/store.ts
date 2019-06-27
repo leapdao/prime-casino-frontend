@@ -280,26 +280,30 @@ class Store {
           ({ returnValues: { taskHash } }) =>
             this.primes.findIndex(p => p.taskHash === taskHash) === -1
         )
-        .map(async ({ returnValues: { number, taskHash, sumYes, sumNo } }) => {
-          const status = await this.getStatus(number);
-          const [results, myBets]: [
-            Result[],
-            BigNumber | null
-          ] = await Promise.all([
-            this.getResults(taskHash, status.pathRoots),
-            this.getMyBets(number)
-          ]);
+        .map(
+          async ({
+            returnValues: { number, taskHash, sumYes, sumNo }
+          }): Promise<Prime> => {
+            const status = await this.getStatus(number);
+            const [results, myBets]: [
+              Result[],
+              BigNumber | null
+            ] = await Promise.all([
+              this.getResults(taskHash, status.pathRoots),
+              this.getMyBets(number)
+            ]);
 
-          return {
-            prime: number,
-            taskHash: taskHash,
-            sumYes: sumYes,
-            sumNo: sumNo,
-            status,
-            results,
-            myBets
-          };
-        })
+            return {
+              number,
+              taskHash: taskHash,
+              sumYes: sumYes,
+              sumNo: sumNo,
+              status,
+              results,
+              myBets
+            };
+          }
+        )
     );
 
     this.primes.push(...updates);
@@ -310,6 +314,7 @@ class Store {
     for (const {
       returnValues: { number, sumYes, sumNo }
     } of events) {
+      console.log(this.primes);
       const index = this.primes.findIndex(prime => prime.number.eq(number));
       if (index !== -1) {
         this.primes[index].sumYes = sumYes;
