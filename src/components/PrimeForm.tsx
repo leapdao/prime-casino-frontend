@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Button, Text, Box } from 'rebass';
-import { store } from './store';
+import { store } from '../store';
 import styled from 'styled-components';
 import BigNumber from 'bignumber.js';
-import { Prime } from './types';
+import { Prime } from '../types';
 
 const PrimeInput = styled.input`
   font-size: 14px;

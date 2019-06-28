@@ -19,7 +19,7 @@ export class EventsCache {
   }
 
   @action
-  add(events: EventData[]) {
+  public add(events: EventData[]) {
     if (events.length > 0) {
       this.events.push(...events);
       this.latestBlockSynced = this.events[this.events.length - 1].blockNumber;

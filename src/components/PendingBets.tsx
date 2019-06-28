@@ -2,9 +2,9 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Heading, Button } from 'rebass';
 import styled from 'styled-components';
-import { store } from './store';
+import { store } from '../store';
 import { Table } from './Table';
-import { Prime } from './types';
+import { Prime } from '../types';
 
 const StakeButton = styled(Button)`
   padding: 0 8px 0 12px;

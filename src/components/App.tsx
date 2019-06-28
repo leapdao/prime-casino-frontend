@@ -2,7 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Heading, Text, Box } from 'rebass';
 import partition from 'lodash/partition';
-import { store } from './store';
+import { store } from '../store';
 import { PendingBets } from './PendingBets';
 import { CompletedBets } from './CompletedBets';
 import { PrimeForm } from './PrimeForm';
@@ -12,6 +12,21 @@ export const Global = createGlobalStyle`
   * {
     box-sizing: border-box;
   }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  code {
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+      monospace;
+  }
+
 `;
 
 const Container = styled(Box)`

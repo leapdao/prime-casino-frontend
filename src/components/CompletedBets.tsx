@@ -1,7 +1,7 @@
 import React from 'react';
 import { Heading } from 'rebass';
 import { Table } from './Table';
-import { Prime } from './types';
+import { Prime } from '../types';
 
 type Props = {
   primes: Prime[];
