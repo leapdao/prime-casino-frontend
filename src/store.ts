@@ -1,12 +1,13 @@
 import Web3 from 'web3';
-import { observable, computed, action, autorun, toJS } from 'mobx';
+import { observable, computed, action } from 'mobx';
 import { Contract, EventData } from 'web3-eth-contract';
 import autobind from 'autobind-decorator';
 import BigNumber from 'bignumber.js';
 
 import primeCasinoABI from './primeCasinoABI.json';
 import enforcerMockABI from './enforcerMockABI.json';
-import { Prime, Status, Result } from './types.js';
+import { Prime, Status, Result } from './types';
+import { EventsCache } from './eventsCache';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
 const ENFORCER_MOCK_ADDR = '0x5861278f6cfda2aaa7642b1246e2661835f1287a';
@@ -35,8 +36,7 @@ class Store {
   @observable
   public myBets: { [key: string]: BigNumber } = {};
 
-  @observable
-  public latestBlockSynced = 0;
+  private cache: EventsCache;
 
   @computed
   public get iPrimeCasino() {
@@ -72,7 +72,7 @@ class Store {
       primeCasinoABI as any,
       PRIME_CASINO_ADDR
     );
-    this.restore();
+    this.cache = new EventsCache(`events_${this.primeCasino.address}`);
 
     const injectedProvider = (window as any).ethereum;
     if (injectedProvider) {
@@ -88,75 +88,30 @@ class Store {
     } else {
       this.contractsSubscribe();
     }
-
-    autorun(this.autosave);
   }
 
-  private get lsKey() {
-    return `cache__${this.primeCasino.address}`;
-  }
-
-  private restore() {
-    const cache = JSON.parse(localStorage.getItem(this.lsKey) || '{}');
-    if (cache.primes) {
-      this.primes = cache.primes.map(
-        ({ prime, status, sumYes, sumNo, myBets, ...rest }: any) => ({
-          ...rest,
-          prime: new BigNumber(prime),
-          status: {
-            challengeEndTime: new BigNumber(status.challengeEndTime),
-            pathRoots: status.pathRoots
-          },
-          sumYes: new BigNumber(sumYes),
-          sumNo: new BigNumber(sumNo),
-          myBets: myBets && new BigNumber(myBets)
-        })
+  private async contractsSubscribe() {
+    if (this.cache.events.length > 0) {
+      await this.addPrimes(
+        this.cache.events.filter(({ event }) => event === 'NewCandidatePrime')
       );
-      this.latestBlockSynced = cache.latestBlockSynced;
+      this.addBets(this.cache.events.filter(({ event }) => event === 'NewBet'));
     }
-  }
-
-  @autobind
-  private autosave() {
-    localStorage.setItem(
-      this.lsKey,
-      JSON.stringify({
-        primes: toJS(
-          this.primes.map(
-            ({ number, status, sumYes, sumNo, myBets, ...rest }) => ({
-              ...rest,
-              number: number.toString(),
-              status: {
-                challengeEndTime: status.challengeEndTime.toString(),
-                pathRoots: status.pathRoots
-              },
-              sumYes: sumYes.toString(),
-              sumNo: sumNo.toString(),
-              myBets: myBets && myBets.toString()
-            })
-          )
-        ),
-        latestBlockSynced: this.latestBlockSynced
-      })
-    );
-  }
-
-  private contractsSubscribe() {
     this.primeCasino
-      .getPastEvents('allEvents', { fromBlock: this.latestBlockSynced })
+      .getPastEvents('allEvents', { fromBlock: this.cache.latestBlockSynced })
       .then(async events => {
+        this.cache.add(events);
         await this.addPrimes(
           events.filter(({ event }) => event === 'NewCandidatePrime')
         );
         this.addBets(events.filter(({ event }) => event === 'NewBet'));
-        this.latestBlockSynced =
-          events.length > 0 ? events[events.length - 1].blockNumber : 0;
         this.loaded = true;
       });
 
     this.primeCasino.events.allEvents(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
+        this.cache.add([event]);
         if (event.event === 'NewCandidatePrime') {
           this.addPrimes([event]);
         }
@@ -171,7 +126,6 @@ class Store {
             });
           }
         }
-        this.latestBlockSynced = event.blockNumber;
       }
     );
     this.primeCasino.methods
@@ -185,6 +139,7 @@ class Store {
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
         this.registerResults([event]);
+        this.cache.latestBlockSynced = event.blockNumber;
       }
     );
   }
@@ -254,7 +209,7 @@ class Store {
 
   private getStatus(number: BigNumber): Promise<Status> {
     return this.primeCasino.methods
-      .getStatus(number)
+      .getStatus(number.toString())
       .call()
       .then((status: any) => ({
         challengeEndTime: status._challengeEndTime,
@@ -314,7 +269,6 @@ class Store {
     for (const {
       returnValues: { number, sumYes, sumNo }
     } of events) {
-      console.log(this.primes);
       const index = this.primes.findIndex(prime => prime.number.eq(number));
       if (index !== -1) {
         this.primes[index].sumYes = sumYes;
