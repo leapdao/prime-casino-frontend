@@ -54,21 +54,29 @@ export class EventsCache {
     localStorage.setItem(
       this.key,
       JSON.stringify({
-        events: toJS(this.events).map(event => {
-          if (event.event === 'NewCandidatePrime' || event.event === 'NewBet') {
-            return {
-              ...event,
-              returnValues: {
-                ...event.returnValues,
-                number: event.returnValues.number.toString(),
-                sumYes: event.returnValues.sumYes.toString(),
-                sumNo: event.returnValues.sumNo.toString()
-              }
-            };
-          }
+        events: toJS(this.events).map(
+          ({
+            returnValues: { number, sumYes, sumNo, ...returnValues },
+            ...event
+          }) => {
+            if (
+              event.event === 'NewCandidatePrime' ||
+              event.event === 'NewBet'
+            ) {
+              return {
+                ...event,
+                returnValues: {
+                  ...returnValues,
+                  number: number.toString(),
+                  sumYes: sumYes.toString(),
+                  sumNo: sumNo.toString()
+                }
+              };
+            }
 
-          return event;
-        }),
+            return event;
+          }
+        ),
         latestBlockSynced: this.latestBlockSynced
       })
     );

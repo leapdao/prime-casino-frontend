@@ -57,6 +57,10 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
           )}
           {primes.map(prime => {
             const { number, results, sumYes, sumNo, status, myBets } = prime;
+            const timePassed =
+              status.challengeEndTime.lte(now) &&
+              status.challengeEndTime.gt(0) &&
+              !status.challengeEndTime.eq(1);
             return (
               <tr key={number.toString()}>
                 <td>{number.toString()}</td>
@@ -67,44 +71,38 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                     <>
                       {status.challengeEndTime.gte(now) ||
                         (status.challengeEndTime.eq(1) && 'Requested')}
-                      {status.challengeEndTime.lte(now) &&
-                        status.challengeEndTime.gt(0) &&
-                        !status.challengeEndTime.eq(1) && (
-                          <>
-                            Not solved{' '}
-                            {myBets && !myBets.eq(0) && (
-                              <Button onClick={() => store.payout(prime)}>
-                                Payout
-                              </Button>
-                            )}
-                          </>
-                        )}
+                      {timePassed && (
+                        <>
+                          Not solved{' '}
+                          {myBets && !myBets.eq(0) && (
+                            <Button onClick={() => store.payout(prime)}>
+                              Payout
+                            </Button>
+                          )}
+                        </>
+                      )}
                     </>
                   )}
                   {results.length === 1 && (
                     <>
                       {status.challengeEndTime.gte(now) && 'Solved'}
-                      {status.challengeEndTime.lte(now) &&
-                        status.challengeEndTime.gt(0) &&
-                        myBets &&
-                        !myBets.eq(0) && (
-                          <Button onClick={() => store.payout(prime)}>
-                            Payout
-                          </Button>
-                        )}
+                      {timePassed && myBets && !myBets.eq(0) && (
+                        <Button onClick={() => store.payout(prime)}>
+                          Payout
+                        </Button>
+                      )}
                     </>
                   )}
                   {results.length > 1 && (
                     <>
                       {status.challengeEndTime.gte(now) && 'Challenged'}
-                      {status.challengeEndTime.lte(now) &&
-                        status.challengeEndTime.gt(0) && (
-                          <>
-                            Undetermined,
-                            <br />
-                            contact support
-                          </>
-                        )}
+                      {timePassed && (
+                        <>
+                          Undetermined,
+                          <br />
+                          contact support
+                        </>
+                      )}
                     </>
                   )}
                 </td>
