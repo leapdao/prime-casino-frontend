@@ -250,9 +250,9 @@ class Store {
 
             return {
               number,
-              taskHash: taskHash,
-              sumYes: sumYes,
-              sumNo: sumNo,
+              taskHash,
+              sumYes,
+              sumNo,
               status,
               results,
               myBets
