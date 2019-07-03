@@ -8,9 +8,31 @@
         "type": "bytes32"
       },
       {
-        "indexed": false,
-        "name": "resourceHash",
+        "indexed": true,
+        "name": "_pathRoot",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "result",
+        "type": "bytes"
+      }
+    ],
+    "name": "Registered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "_taskHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "_data",
+        "type": "bytes"
       }
     ],
     "name": "Request",
@@ -28,8 +50,8 @@
         "type": "bytes32"
       },
       {
-        "name": "_resultHash",
-        "type": "bytes32"
+        "name": "result",
+        "type": "bytes"
       }
     ],
     "name": "registerResult",
@@ -56,19 +78,57 @@
     "constant": false,
     "inputs": [
       {
-        "name": "_resourceHash",
-        "type": "bytes32"
+        "components": [
+          {
+            "name": "origin",
+            "type": "address"
+          },
+          {
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "name": "blockHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "blockNumber",
+            "type": "uint256"
+          },
+          {
+            "name": "time",
+            "type": "uint256"
+          },
+          {
+            "name": "txGasLimit",
+            "type": "uint256"
+          },
+          {
+            "name": "customEnvironmentHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "codeHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "dataHash",
+            "type": "bytes32"
+          }
+        ],
+        "name": "_params",
+        "type": "tuple"
       },
       {
-        "name": "_taskHash",
-        "type": "bytes32"
+        "name": "_data",
+        "type": "bytes"
       }
     ],
     "name": "request",
     "outputs": [
       {
         "name": "",
-        "type": "bool"
+        "type": "bytes32"
       }
     ],
     "payable": false,
