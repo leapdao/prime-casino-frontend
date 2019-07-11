@@ -3,14 +3,79 @@
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "name": "taskHash",
+        "type": "bytes32"
+      },
+      {
+        "components": [
+          {
+            "name": "origin",
+            "type": "address"
+          },
+          {
+            "name": "target",
+            "type": "address"
+          },
+          {
+            "name": "blockHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "blockNumber",
+            "type": "uint256"
+          },
+          {
+            "name": "time",
+            "type": "uint256"
+          },
+          {
+            "name": "txGasLimit",
+            "type": "uint256"
+          },
+          {
+            "name": "customEnvironmentHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "codeHash",
+            "type": "bytes32"
+          },
+          {
+            "name": "dataHash",
+            "type": "bytes32"
+          }
+        ],
+        "indexed": false,
+        "name": "parameters",
+        "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "name": "callData",
+        "type": "bytes"
+      }
+    ],
+    "name": "Requested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
-        "name": "_taskHash",
+        "name": "taskHash",
         "type": "bytes32"
       },
       {
         "indexed": true,
-        "name": "_pathRoot",
+        "name": "solverPathRoot",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "executionDepth",
+        "type": "uint256"
       },
       {
         "indexed": false,
@@ -19,23 +84,6 @@
       }
     ],
     "name": "Registered",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "name": "_taskHash",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "name": "_data",
-        "type": "bytes"
-      }
-    ],
-    "name": "Request",
     "type": "event"
   },
   {
