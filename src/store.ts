@@ -11,7 +11,7 @@ import { EventsCache } from './eventsCache';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
 const ENFORCER_MOCK_ADDR = '0x717dcacb345bbf5a1d619da62e37b8136e389379';
-const PRIME_CASINO_ADDR = '0x3967a3312a7ae45d560cddf75f2096c5ccf7a621';
+const PRIME_CASINO_ADDR = '0x707c1df388d9f8889e4e882fa14b25ee7f0dd724';
 
 class Store {
   public web3: Web3;

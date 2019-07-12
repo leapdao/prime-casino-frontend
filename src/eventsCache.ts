@@ -21,7 +21,12 @@ export class EventsCache {
   @action
   public add(events: EventData[]) {
     if (events.length > 0) {
-      this.events.push(...events);
+      this.events.push(
+        ...events.filter(
+          (e1: any) =>
+            this.events.findIndex((e2: any) => e2.id === e1.id) === -1
+        )
+      );
       this.latestBlockSynced = this.events[this.events.length - 1].blockNumber;
     }
   }
