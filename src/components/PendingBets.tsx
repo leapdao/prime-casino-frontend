@@ -5,6 +5,7 @@ import styled from 'styled-components';
 import { store } from '../store';
 import { Table } from './Table';
 import { Prime } from '../types';
+import { ResultIcon } from './ResultIcon';
 
 const StakeButton = styled(Button)`
   padding: 0 8px 0 12px;
@@ -36,14 +37,10 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
           <tr>
             <th>Number</th>
             <th>
-              <span role="img" aria-label="Yes">
-                👍
-              </span>
+              <ResultIcon result="0x04" />
             </th>
             <th>
-              <span role="img" aria-label="No">
-                👎
-              </span>
+              <ResultIcon result="0x00" />
             </th>
             <th>Status</th>
             <th />
@@ -85,12 +82,12 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                   )}
                   {results.length === 1 && (
                     <>
-                      {status.challengeEndTime.gte(now) && 'Solved'}
-                      {timePassed && myBets && !myBets.eq(0) && (
-                        <Button onClick={() => store.payout(prime)}>
-                          Payout
-                        </Button>
-                      )}
+                      {status.challengeEndTime.gte(now) ||
+                        (timePassed && (
+                          <>
+                            Solved <ResultIcon result={results[0].result} />
+                          </>
+                        ))}
                     </>
                   )}
                   {results.length > 1 && (
@@ -115,18 +112,14 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                           store.bet(prime, true);
                         }}
                       >
-                        <span role="img" aria-label="Yes">
-                          👍
-                        </span>
+                        <ResultIcon result="0x04" />
                       </StakeButton>
                       <StakeButton
                         onClick={() => {
                           store.bet(prime, false);
                         }}
                       >
-                        <span role="img" aria-label="No">
-                          👎
-                        </span>
+                        <ResultIcon result="0x00" />
                       </StakeButton>
                     </>
                   )}
@@ -141,6 +134,14 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                       registerResult
                     </StakeButton>
                   )}
+                  {results.length === 1 &&
+                    timePassed &&
+                    myBets &&
+                    !myBets.eq(0) && (
+                      <Button onClick={() => store.payout(prime)}>
+                        Payout
+                      </Button>
+                    )}
                 </td>
               </tr>
             );
