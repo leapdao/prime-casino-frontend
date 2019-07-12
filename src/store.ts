@@ -180,16 +180,6 @@ class Store {
     }
   }
 
-  public registerResult(prime: Prime) {
-    if (this.iEnforcerMock) {
-      const path =
-        '0x1100000000000000000000000000000000000000000000000000000000000011';
-      this.iEnforcerMock.methods
-        .registerResult(prime.taskHash, path, '0x00')
-        .send({ from: this.address });
-    }
-  }
-
   private getResults(taskHash: string, pathRoots: string[]) {
     return Promise.all(
       pathRoots.map(pathRoot => {

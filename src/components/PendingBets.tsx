@@ -124,16 +124,6 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
                     </>
                   )}
 
-                  {results.length === 0 && (
-                    <StakeButton
-                      borderColor="red"
-                      onClick={() => {
-                        store.registerResult(prime);
-                      }}
-                    >
-                      registerResult
-                    </StakeButton>
-                  )}
                   {results.length === 1 &&
                     timePassed &&
                     myBets &&
