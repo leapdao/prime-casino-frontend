@@ -149,13 +149,15 @@ class Store {
   }
 
   @autobind
-  public newPrime(prime: string) {
+  public newPrime(prime: string): Promise<void> {
     if (this.iPrimeCasino && this.minBet) {
-      this.iPrimeCasino.methods.request(prime).send({
+      return this.iPrimeCasino.methods.request(prime).send({
         value: this.minBet,
         from: this.address
       });
     }
+
+    return Promise.reject('Not ready yet');
   }
 
   public bet(prime: Prime, isPrime: boolean) {

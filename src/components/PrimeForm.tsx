@@ -29,7 +29,7 @@ const Error = styled(Text)`
 `;
 
 type Props = {
-  onSubmit: (number: string) => void;
+  onSubmit: (number: string) => Promise<void>;
 };
 
 const MAX_NUMBER = new BigNumber(2).pow(256);
@@ -59,6 +59,7 @@ export const PrimeForm: React.FC<Props> = observer(({ onSubmit }) => {
     e.preventDefault();
     if (!error) {
       onSubmit(value);
+      setValue('');
     } else {
       setShowErrors(true);
     }
