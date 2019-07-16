@@ -5,18 +5,18 @@ import autobind from 'autobind-decorator';
 import BigNumber from 'bignumber.js';
 
 import primeCasinoABI from './primeCasinoABI.json';
-import enforcerMockABI from './enforcerMockABI.json';
+import enforcerABI from './enforcerABI.json';
 import { Prime, Status, Result } from './types';
 import { EventsCache } from './eventsCache';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const ENFORCER_MOCK_ADDR = '0x717dcacb345bbf5a1d619da62e37b8136e389379';
-const PRIME_CASINO_ADDR = '0x707c1df388d9f8889e4e882fa14b25ee7f0dd724';
+const ENFORCER_ADDR = '0x6949a2a84C9f32C0C905C84686f129a6abC74Ea1';
+const PRIME_CASINO_ADDR = '0xdcd195571746500bf0346e862abb217561a3693b';
 
 class Store {
   public web3: Web3;
   public primeCasino: Contract;
-  public enforcerMock: Contract;
+  public enforcer: Contract;
 
   @observable
   public loaded = false;
@@ -51,22 +51,19 @@ class Store {
   }
 
   @computed
-  public get iEnforcerMock() {
+  public get iEnforcer() {
     if (!this.iWeb3) {
       return null;
     }
 
-    return new this.iWeb3.eth.Contract(
-      enforcerMockABI as any,
-      ENFORCER_MOCK_ADDR
-    );
+    return new this.iWeb3.eth.Contract(enforcerABI as any, ENFORCER_ADDR);
   }
 
   constructor() {
     this.web3 = new Web3(RPC_URL);
-    this.enforcerMock = new this.web3.eth.Contract(
-      enforcerMockABI as any,
-      ENFORCER_MOCK_ADDR
+    this.enforcer = new this.web3.eth.Contract(
+      enforcerABI as any,
+      ENFORCER_ADDR
     );
     this.primeCasino = new this.web3.eth.Contract(
       primeCasinoABI as any,
@@ -139,7 +136,7 @@ class Store {
         this.minBet = minBet;
       });
 
-    this.enforcerMock.events.Registered(
+    this.enforcer.events.Registered(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
         this.registerResults([event]);
@@ -185,17 +182,17 @@ class Store {
   private getResults(taskHash: string, pathRoots: string[]) {
     return Promise.all(
       pathRoots.map(pathRoot => {
-        return this.enforcerMock
+        return this.enforcer
           .getPastEvents('Registered', {
             fromBlock: 0,
             filter: {
-              _taskHash: taskHash,
-              _pathRoot: pathRoot
+              taskHash,
+              solverPathRoot: pathRoot
             }
           })
-          .then(([{ returnValues: { _pathRoot, result } }]) => {
+          .then(([{ returnValues: { solverPathRoot, result } }]) => {
             return {
-              pathRoot: _pathRoot,
+              pathRoot: solverPathRoot,
               result
             };
           });
@@ -243,6 +240,7 @@ class Store {
               this.getResults(taskHash, status.pathRoots),
               this.getMyBets(number)
             ]);
+            console.log(number.toString(), results);
 
             return {
               number,
