@@ -20,7 +20,7 @@ export const CompletedBets: React.FC<Props> = ({ primes }) => {
           </tr>
         </thead>
         <tbody>
-          {primes.map(({ number, results }) => (
+          {primes.reverse().map(({ number, results }) => (
             <tr key={number.toString()}>
               <td>{number.toString()}</td>
               <td>

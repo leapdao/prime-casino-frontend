@@ -52,7 +52,7 @@ export const PendingBets: React.FC<Props> = observer(({ primes }) => {
               <td colSpan={5}>No candidates</td>
             </tr>
           )}
-          {primes.map(prime => {
+          {primes.reverse().map(prime => {
             const { number, results, sumYes, sumNo, status, myBets } = prime;
             const timePassed =
               status.challengeEndTime.lte(now) &&
