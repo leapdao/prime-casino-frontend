@@ -60,6 +60,7 @@ export const PrimeForm: React.FC<Props> = observer(({ onSubmit }) => {
     if (!error) {
       onSubmit(value);
       setValue('');
+      setShowErrors(false);
     } else {
       setShowErrors(true);
     }
