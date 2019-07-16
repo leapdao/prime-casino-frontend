@@ -202,11 +202,15 @@ class Store {
 
   private getStatus(number: BigNumber): Promise<Status> {
     return this.primeCasino.methods
-      .getStatus(number.toString())
+      .getStatus(`0x${number.toString(16)}`)
       .call()
       .then((status: any) => ({
         challengeEndTime: status._challengeEndTime,
         pathRoots: status._pathRoots
+      }))
+      .catch(() => ({
+        challengeEndTime: 0,
+        pathRoots: []
       }));
   }
 
@@ -216,7 +220,7 @@ class Store {
     }
 
     return this.primeCasino.methods
-      .getBet(prime.toString(), this.address)
+      .getBet(`0x${prime.toString(16)}`, this.address)
       .call();
   }
 
@@ -274,13 +278,11 @@ class Store {
   @action
   private registerResults(events: EventData[]) {
     for (const {
-      returnValues: { _taskHash, result, _pathRoot }
+      returnValues: { solverPathRoot, taskHash, result }
     } of events) {
-      const index = this.primes.findIndex(
-        prime => prime.taskHash === _taskHash
-      );
+      const index = this.primes.findIndex(prime => prime.taskHash === taskHash);
       this.primes[index].results.push(result);
-      this.primes[index].status.pathRoots.push(_pathRoot);
+      this.primes[index].status.pathRoots.push(solverPathRoot);
     }
   }
 }
