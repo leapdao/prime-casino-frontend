@@ -1,4 +1,4 @@
-import { observable, action, autorun, toJS } from 'mobx';
+import { observable, action, toJS } from 'mobx';
 import { EventData } from 'web3-eth-contract';
 import autobind from 'autobind-decorator';
 import BigNumber from 'bignumber.js';
