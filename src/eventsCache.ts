@@ -15,7 +15,7 @@ export class EventsCache {
   constructor(key: string) {
     this.key = key;
     // this.restore();
-    autorun(this.autosave);
+    // autorun(this.autosave);
   }
 
   @action
@@ -26,7 +26,6 @@ export class EventsCache {
       )
       .map(this.prepareEvent)
       .map(this.restoreEvent);
-    console.log(addedEvents);
     this.events.push(...addedEvents);
     if (events.length > 0) {
       this.latestBlockSynced = this.events[this.events.length - 1].blockNumber;

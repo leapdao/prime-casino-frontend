@@ -73,7 +73,7 @@ class Store {
       primeCasinoABI as any,
       PRIME_CASINO_ADDR
     );
-    this.cache = new EventsCache(`events_${this.primeCasino.address}`);
+    this.cache = new EventsCache(`events-${this.primeCasino.address}`);
 
     const injectedProvider = (window as any).ethereum;
     if (injectedProvider) {
@@ -249,7 +249,6 @@ class Store {
     });
 
     return batch.execute().then((result: any) => {
-      console.log(result);
       const { response }: { response: any[] } = result;
       return response.reduce((myBets, bet, i) => {
         myBets[primes[i].toString(16)] = bet;
@@ -289,37 +288,6 @@ class Store {
         );
       });
     });
-    // await Promise.all(
-    //   events
-    //     .filter(
-    //       ({ returnValues: { taskHash } }) =>
-    //         this.primes.findIndex(p => p.taskHash === taskHash) === -1
-    //     )
-    //     .map(
-    //       async ({
-    //         returnValues: { number, taskHash, sumYes, sumNo }
-    //       }): Promise<Prime> => {
-    //         const status = await this.getStatus(number);
-    //         const [results, myBets]: [
-    //           Result[],
-    //           BigNumber | null
-    //         ] = await Promise.all([
-    //           this.getResults(taskHash, status.pathRoots),
-    //           this.getMyBets(number)
-    //         ]);
-
-    //         return {
-    //           number,
-    //           taskHash,
-    //           sumYes,
-    //           sumNo,
-    //           status,
-    //           results,
-    //           myBets
-    //         };
-    //       }
-    //     )
-    // );
   }
 
   @action
