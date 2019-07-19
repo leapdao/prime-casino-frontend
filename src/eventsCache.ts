@@ -14,7 +14,7 @@ export class EventsCache {
 
   constructor(key: string) {
     this.key = key;
-    // this.restore();
+    this.restore();
     autorun(this.autosave);
   }
 
