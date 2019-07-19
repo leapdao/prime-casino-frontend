@@ -263,31 +263,32 @@ class Store {
     const numbers: BigNumber[] = events.map(
       ({ returnValues: { number } }) => number
     );
-    Promise.all([this.getStatuses(events), this.getResults(events)]).then(
-      ([statuses, results]) => {
-        this.getMyBetsBatch(numbers).then(myBets => {
-          this.primes.push(
-            ...events.map(
-              ({ returnValues: { number, taskHash, sumYes, sumNo } }) => {
-                const status = statuses[number.toString(16)];
-                const numberResults = status.pathRoots
-                  .map(pathRoot => results[`${taskHash}-${pathRoot}`])
-                  .filter(a => a);
-                return {
-                  number,
-                  taskHash,
-                  sumYes,
-                  sumNo,
-                  status,
-                  results: numberResults,
-                  myBets: myBets[number.toString(16)]
-                };
-              }
-            )
-          );
-        });
-      }
-    );
+    return Promise.all([
+      this.getStatuses(events),
+      this.getResults(events)
+    ]).then(([statuses, results]) => {
+      return this.getMyBetsBatch(numbers).then(myBets => {
+        this.primes.push(
+          ...events.map(
+            ({ returnValues: { number, taskHash, sumYes, sumNo } }) => {
+              const status = statuses[number.toString(16)];
+              const numberResults = status.pathRoots
+                .map(pathRoot => results[`${taskHash}-${pathRoot}`])
+                .filter(a => a);
+              return {
+                number,
+                taskHash,
+                sumYes,
+                sumNo,
+                status,
+                results: numberResults,
+                myBets: myBets[number.toString(16)]
+              };
+            }
+          )
+        );
+      });
+    });
     // await Promise.all(
     //   events
     //     .filter(
