@@ -94,30 +94,27 @@ class Store {
       );
       this.addBets(this.cache.events.filter(({ event }) => event === 'NewBet'));
     }
-    this.primeCasino.methods
-      .primeTester()
-      .call()
-      .then(console.log);
+
     this.primeCasino
       .getPastEvents('allEvents', { fromBlock: this.cache.latestBlockSynced })
       .then(async events => {
-        this.cache.add(events);
+        const addedEvents = this.cache.add(events);
         await this.addPrimes(
-          events.filter(({ event }) => event === 'NewCandidatePrime')
+          addedEvents.filter(({ event }) => event === 'NewCandidatePrime')
         );
-        this.addBets(events.filter(({ event }) => event === 'NewBet'));
+        this.addBets(addedEvents.filter(({ event }) => event === 'NewBet'));
         this.loaded = true;
       });
 
     this.primeCasino.events.allEvents(
       { fromBlock: 'latest' },
       (err: any, event: EventData) => {
-        this.cache.add([event]);
+        const addedEvents = this.cache.add([event]);
         if (event.event === 'NewCandidatePrime') {
-          this.addPrimes([event]);
+          this.addPrimes(addedEvents);
         }
         if (event.event === 'NewBet') {
-          this.addBets([event]);
+          this.addBets(addedEvents);
           const index = this.primes.findIndex(prime =>
             prime.number.eq(event.returnValues.number)
           );
@@ -207,10 +204,6 @@ class Store {
       .then((status: any) => ({
         challengeEndTime: status._challengeEndTime,
         pathRoots: status._pathRoots
-      }))
-      .catch(() => ({
-        challengeEndTime: 0,
-        pathRoots: []
       }));
   }
 
@@ -244,7 +237,6 @@ class Store {
               this.getResults(taskHash, status.pathRoots),
               this.getMyBets(number)
             ]);
-            console.log(number.toString(), results);
 
             return {
               number,
