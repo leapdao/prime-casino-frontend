@@ -308,9 +308,14 @@ class Store {
     for (const {
       returnValues: { solverPathRoot, taskHash, result }
     } of events) {
-      console.log({ solverPathRoot, taskHash, result });
       const index = this.primes.findIndex(prime => prime.taskHash === taskHash);
-      this.primes[index].results.push(result);
+      this.primes[index].results = this.primes[index].results.filter(
+        r => r.pathRoot !== solverPathRoot
+      );
+      this.primes[index].results.push({
+        result,
+        pathRoot: solverPathRoot
+      });
       this.primes[index].status.pathRoots.push(solverPathRoot);
     }
   }
