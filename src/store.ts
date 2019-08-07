@@ -10,8 +10,8 @@ import { Prime, Status, Result } from './types';
 import { EventsCache } from './eventsCache';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const ENFORCER_ADDR = process.env.ENFORCER;
-const PRIME_CASINO_ADDR = process.env.PRIME_CASINO;
+const ENFORCER_ADDR = process.env.REACT_APP_ENFORCER;
+const PRIME_CASINO_ADDR = process.env.REACT_APP_PRIME_CASINO;
 
 type Statuses = { [key: string]: Status };
 type Results = { [key: string]: Result };

@@ -8,7 +8,7 @@ before_install:
   - export PATH=$PATH:$HOME/.local/bin
 
 script:
-  - PRIME_CASINO=$PRIME_CASINO ENFORCER=$ENFORCER yarn build
+  - REACT_APP_PRIME_CASINO=$PRIME_CASINO REACT_APP_ENFORCER=$ENFORCER yarn build
 
 cache: yarn
 
