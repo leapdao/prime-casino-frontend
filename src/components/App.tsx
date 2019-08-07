@@ -76,6 +76,12 @@ export const App: React.FC = observer(() => {
   return (
     <Container>
       <Header>
+        <img
+          src={require('./calculating.png')}
+          width="556"
+          height="242"
+          alt="zach galifianakis calculating meme"
+        />
         <Title>Prime Casino</Title>
         <IntroText>
           Welcome to Prime Casino. Here you can bet on whether a number
