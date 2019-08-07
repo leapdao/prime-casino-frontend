@@ -10,8 +10,8 @@ import { Prime, Status, Result } from './types';
 import { EventsCache } from './eventsCache';
 
 const RPC_URL = 'wss://goerli.infura.io/ws/v3/f039330d8fb747e48a7ce98f51400d65';
-const ENFORCER_ADDR = '0x6949a2a84C9f32C0C905C84686f129a6abC74Ea1';
-const PRIME_CASINO_ADDR = '0xdcd195571746500bf0346e862abb217561a3693b';
+const ENFORCER_ADDR = process.env.ENFORCER;
+const PRIME_CASINO_ADDR = process.env.PRIME_CASINO;
 
 type Statuses = { [key: string]: Status };
 type Results = { [key: string]: Result };
@@ -259,6 +259,9 @@ class Store {
 
   @action
   private async addPrimes(events: EventData[]) {
+    if (events.length === 0) {
+      return;
+    }
     const numbers: BigNumber[] = events.map(
       ({ returnValues: { number } }) => number
     );
